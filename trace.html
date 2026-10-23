@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trace On Screen</title>
+<style>
+/* Tracing light-box: the screen stays plain white so paper held on it shows the lines through. */
+:root { --ink: #14213d; --muted: #5a6478; --line: #d6dbe4; --red: #c81414; --ok: #2f7d4f; --bar: #f4f6f9; }
+* { box-sizing: border-box }
+html, body { margin: 0; background: #ffffff; color: var(--ink); font: 15px/1.45 "Segoe UI", system-ui, sans-serif; }
+.bar { position: sticky; top: 0; z-index: 2; background: var(--bar); border-bottom: 1px solid var(--line); padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
+.bar h1 { font-size: 17px; margin: 0; }
+.bar .grp { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: #fff; color: var(--ink); border-radius: 8px; padding: 6px 12px; cursor: pointer; min-height: 36px; }
+button[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+button:focus-visible, input:focus-visible { outline: 3px solid #f2b705; outline-offset: 2px; }
+.hint { color: var(--muted); font-size: 13px; }
+main { padding: 16px; }
+.cal { max-width: 760px; }
+.cal ol { padding-left: 20px; margin: 8px 0 14px; }
+.ruler { position: relative; height: 70px; margin: 14px 0 6px; }
+.ruler .tick { position: absolute; bottom: 24px; width: var(--hair, 1px); background: #000; transform: translateX(-50%); }
+.ruler .lab { position: absolute; bottom: 0; transform: translateX(-50%); font-size: 12px; }
+.ruler .base { position: absolute; left: 0; bottom: 24px; height: var(--hair, 1px); background: #000; }
+.card { border: var(--hair, 1px) solid #000; border-radius: 3.2mm; margin: 12px 0; display: grid; place-items: center; color: var(--muted); font-size: 13px; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+input[type=range] { width: min(420px, 100%); }
+.big { font-size: 22px; font-weight: 700; }
+.done { color: var(--ok); font-weight: 700; }
+.view { display: none; }
+.view.on { display: block; }
+.pic { display: block; image-rendering: auto; }
+.legend { margin: 8px 0 12px; display: flex; flex-wrap: wrap; gap: 6px 20px; font-size: 14px; }
+.legend b { color: var(--red); }
+body.clean .bar, body.clean .legend, body.clean .hint, body.clean .cal-open { display: none; }
+body.clean main { padding: 0; }
+.exit { display: none; position: fixed; right: 12px; top: 12px; z-index: 3; opacity: .5; }
+body.clean .exit { display: block; }
+</style>
+</head>
+<body>
+<div class="bar">
+  <h1>SkyCab · trace on screen</h1>
+  <div class="grp" role="group" aria-label="What to show">
+    <button data-show="cal" aria-pressed="true">1. Set true size</button>
+    <button data-show="upper" aria-pressed="false">C1 upper</button>
+    <button data-show="flipped" aria-pressed="false">C1 flipped copy</button>
+  </div>
+  <div class="grp"><button id="clean">Hide buttons (trace mode)</button><button id="full">Full screen</button></div>
+  <span class="hint" id="state"></span>
+</div>
+<button class="exit" id="exit">Show buttons</button>
+
+<main>
+  <section class="view on cal" id="v-cal">
+    <h2>Step 1: make the screen show true size</h2>
+    <p>The browser doesn't know how big your screen's pixels are, so match it once with something you can measure. Keep the browser zoom at 100% (Ctrl+0) while you do this and while you trace.</p>
+    <ol>
+      <li>Hold a ruler against the screen on the black line below.</li>
+      <li>Drag the slider (or use the − / + buttons) until the line is exactly <b>10 cm</b> on your ruler.</li>
+      <li>Check with a bank card (any credit/debit card is 85.6 × 54 mm): it should fit the box exactly.</li>
+    </ol>
+    <div class="ruler" id="ruler" aria-label="10 centimetre ruler"></div>
+    <div class="row">
+      <button id="minus" aria-label="Smaller">−</button>
+      <input type="range" id="scale" min="2" max="9" step="0.002" aria-label="Pixels per millimetre">
+      <button id="plus" aria-label="Bigger">+</button>
+      <span class="hint" id="pxmm"></span>
+    </div>
+    <div class="card" id="card">bank card goes here</div>
+    <p><button id="ok">Matches: start tracing</button> <span id="saved" class="done"></span></p>
+  </section>
+
+  <section class="view" id="v-upper">
+    <div class="legend"><span>Page 1 of your roll print, <b>upper C1</b></span><span>dashed = hole as printed</span><span><b>solid red = new hole: trace this</b></span></div>
+    <img class="pic" src="trace-c1-upper.png" alt="Upper C1 strut hole: dashed old circle, solid red new hole" data-mm="154">
+  </section>
+  <section class="view" id="v-flipped">
+    <div class="legend"><span>Page 1 of your roll print, <b>flipped C1</b></span><span>dashed = hole as printed</span><span><b>solid red = new hole: trace this</b></span></div>
+    <img class="pic" src="trace-c1-flipped.png" alt="Flipped C1 strut hole: dashed old circle, solid red new hole" data-mm="154">
+  </section>
+  <p class="hint">Tracing: screen brightness to full, hold the printed sheet on the screen, line up the dashed circle, blue fold lines and tab edges with your print, and trace the red line with a soft pencil. Press lightly: screens scratch and dent.</p>
+</main>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const KEY = 'skycab-pxmm';
+  const sig = () => `${screen.width}x${screen.height}@${devicePixelRatio}`;
+  let pxmm = 96 / 25.4, saved = false;
+  try { const v = JSON.parse(localStorage.getItem(KEY) || 'null'); if (v && v.sig === sig() && v.pxmm > 1) { pxmm = v.pxmm; saved = true; } } catch (e) {}
+
+  function draw() {
+    document.documentElement.style.setProperty('--hair', (1 / (devicePixelRatio || 1)) + 'px');   // one screen pixel
+    const r = $('ruler'); r.innerHTML = '';
+    const base = document.createElement('div'); base.className = 'base'; base.style.width = (100 * pxmm) + 'px'; r.appendChild(base);
+    for (let i = 0; i <= 100; i++) {
+      const t = document.createElement('div'); t.className = 'tick';
+      t.style.left = (i * pxmm) + 'px'; t.style.height = (i % 10 === 0 ? 22 : i % 5 === 0 ? 15 : 8) + 'px'; r.appendChild(t);
+      if (i % 10 === 0) { const l = document.createElement('div'); l.className = 'lab'; l.style.left = (i * pxmm) + 'px'; l.textContent = i === 100 ? '10 cm' : i / 10; r.appendChild(l); }
+    }
+    $('card').style.width = (85.6 * pxmm) + 'px'; $('card').style.height = (53.98 * pxmm) + 'px';
+    document.querySelectorAll('.pic').forEach(im => { im.style.width = (+im.dataset.mm * pxmm) + 'px'; });
+    $('scale').value = pxmm; $('pxmm').textContent = pxmm.toFixed(3) + ' px per mm';
+    $('state').textContent = saved ? 'True size set for this screen' : 'True size not set yet: do step 1';
+  }
+  const set = v => { pxmm = Math.max(2, Math.min(9, v)); saved = false; draw(); };
+  $('scale').addEventListener('input', e => set(+e.target.value));
+  $('minus').addEventListener('click', () => set(pxmm - 0.005));
+  $('plus').addEventListener('click', () => set(pxmm + 0.005));
+  $('ok').addEventListener('click', () => {
+    saved = true;
+    try { localStorage.setItem(KEY, JSON.stringify({ pxmm, sig: sig() })); } catch (e) {}
+    $('saved').textContent = 'Saved for this screen.'; draw(); show('upper');
+  });
+  function show(k) {
+    document.querySelectorAll('[data-show]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.show === k)));
+    document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'v-' + k));
+  }
+  document.querySelectorAll('[data-show]').forEach(b => b.addEventListener('click', () => show(b.dataset.show)));
+  $('clean').addEventListener('click', () => document.body.classList.add('clean'));
+  $('exit').addEventListener('click', () => document.body.classList.remove('clean'));
+  $('full').addEventListener('click', () => { try { const d = document.documentElement, r = document.fullscreenElement ? document.exitFullscreen() : d.requestFullscreen(); if (r && r.catch) r.catch(() => {}); } catch (e) {} });
+  addEventListener('keydown', e => { if (e.key === 'Escape') document.body.classList.remove('clean'); });
+  // browser zoom or moving to another screen changes the pixel size: ask again
+  addEventListener('resize', () => { try { const v = JSON.parse(localStorage.getItem(KEY) || 'null'); if (!v || v.sig !== sig()) { saved = false; draw(); } } catch (e) {} });
+  draw(); const h = location.hash.slice(1); if (['cal', 'upper', 'flipped'].includes(h)) show(h); else if (saved) show('upper');
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,2143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SkyCab Skeleton</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: workshop sheet. Viewer on a cutting mat beside the sizing panel, then parts as labelled stencil cards. */
+:root {
+  --bg: #eef1f5; --surface: #ffffff; --ink: #14213d; --muted: #5a6478; --line: #d6dbe4;
+  --taxi: #f2b705; --taxi-ink: #14213d; --mat: #2f5d50; --mat-line: #4f7d6f; --kraft: #b98a5a;
+  --cut: #14213d; --fold: #2457b8; --center: #d0342c; --mark: #6b7f99; --flute: #9a6a3a; --warn: #b54708; --ok: #2f7d4f;
+  --display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e1420; --surface: #161e2d; --ink: #e8ecf3; --muted: #9aa5b8; --line: #2a3445;
+  --taxi: #f5c518; --taxi-ink: #14213d; --mat: #1d3a32; --mat-line: #33584c; --kraft: #c49a6c;
+  --cut: #e8ecf3; --fold: #7aa7ff; --center: #ff6b5f; --mark: #8fa3bf; --flute: #d29a5e; --warn: #f59e0b; --ok: #4ade80; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0e1420; --surface: #161e2d; --ink: #e8ecf3; --muted: #9aa5b8; --line: #2a3445;
+  --taxi: #f5c518; --taxi-ink: #14213d; --mat: #1d3a32; --mat-line: #33584c; --kraft: #c49a6c;
+  --cut: #e8ecf3; --fold: #7aa7ff; --center: #ff6b5f; --mark: #8fa3bf; --flute: #d29a5e; --warn: #f59e0b; --ok: #4ade80; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; letter-spacing: .01em; }
+h1 { font-size: clamp(34px, 6vw, 56px); font-weight: 900; line-height: .95; text-transform: uppercase; }
+h2 { font-size: 28px; font-weight: 800; text-transform: uppercase; }
+h3 { font-size: 20px; font-weight: 800; }
+.num, input, .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.checker { height: 14px; background: repeating-conic-gradient(var(--ink) 0 25%, var(--taxi) 0 50%) 0 0 / 14px 14px; }
+header { padding-block: 28px 20px; display: grid; gap: 10px; }
+header p { margin: 0; max-width: 68ch; color: var(--muted); }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.top { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 860px) { .top { grid-template-columns: minmax(0, 1fr); } }
+.viewer { position: relative; background: var(--mat); border-radius: 10px; overflow: hidden; aspect-ratio: 4 / 3.2; max-width: 100%; touch-action: none; }
+.viewer canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+.viewer canvas:active { cursor: grabbing; }
+.vbar { position: absolute; left: 10px; right: 10px; top: 10px; display: flex; flex-wrap: wrap; gap: 6px; justify-content: space-between; pointer-events: none; }
+.vbar > div { display: flex; gap: 6px; flex-wrap: wrap; pointer-events: auto; }
+.chip { font: 600 12px var(--mono); border: 1px solid rgba(255,255,255,.35); color: #fff; background: rgba(0,0,0,.28); padding: 6px 10px; border-radius: 999px; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--taxi); color: var(--taxi-ink); border-color: var(--taxi); }
+.chip:focus-visible, button:focus-visible, input:focus-visible, .card:focus-visible { outline: 3px solid var(--taxi); outline-offset: 2px; }
+.pickinfo { position: absolute; left: 10px; right: 10px; bottom: 34px; background: rgba(10,14,22,.86); color: #fff; border: 2px solid #ff5a1f; border-radius: 10px; padding: 10px 12px; display: grid; grid-template-columns: auto 1fr auto; gap: 4px 10px; align-items: center; font-size: 14px; }
+.pickinfo[hidden] { display: none; }
+.pickinfo .tg { font: 700 15px var(--mono); background: #ff5a1f; color: #fff; border-radius: 5px; padding: 3px 8px; }
+.pickinfo .ds { grid-column: 1 / -1; color: rgba(255,255,255,.82); font-size: 13px; }
+.pickinfo .acts { display: flex; gap: 6px; }
+.pickinfo button { font: 600 12px var(--mono); border: 1px solid rgba(255,255,255,.45); background: transparent; color: #fff; border-radius: 999px; padding: 5px 10px; cursor: pointer; }
+.pickinfo button.go { background: #ff5a1f; border-color: #ff5a1f; }
+.finder { margin-top: 10px; display: grid; gap: 6px; }
+.finder .lbl { font: 600 11px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.finder .row { display: flex; flex-wrap: wrap; gap: 6px; }
+.fchip { font: 600 12px var(--mono); border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 6px; padding: 5px 8px; cursor: pointer; }
+.fchip b { margin-right: 4px; }
+.fchip[aria-pressed="true"] { background: #ff5a1f; border-color: #ff5a1f; color: #fff; }
+.fchip:focus-visible, tr[data-part]:focus-visible { outline: 3px solid var(--taxi); outline-offset: 1px; }
+.card[aria-pressed="true"] { border-color: #ff5a1f !important; box-shadow: 0 0 0 3px #ff5a1f !important; }
+.card[aria-pressed="true"] .tag { background: #ff5a1f; color: #fff; }
+.card[aria-pressed="true"] svg .fill { fill: rgba(255, 90, 31, .35); }
+tr[data-part] { cursor: pointer; }
+tr[data-part]:hover td { background: color-mix(in srgb, var(--taxi) 10%, transparent); }
+tr[aria-selected="true"] td { background: rgba(255, 90, 31, .16); }
+tr[aria-selected="true"] .tag { background: #ff5a1f; color: #fff; }
+.flash { animation: flash 1.2s ease-out 1; }
+@keyframes flash { 0% { box-shadow: 0 0 0 8px rgba(255,90,31,.7); } 100% { box-shadow: 0 0 0 3px #ff5a1f; } }
+@media (prefers-reduced-motion: reduce) { .flash { animation: none; } }
+.vhint { position: absolute; left: 12px; bottom: 10px; color: rgba(255,255,255,.75); font: 12px var(--mono); pointer-events: none; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 14px; }
+.fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
+.field { display: grid; gap: 4px; }
+.field label { font-size: 13px; color: var(--muted); line-height: 1.25; }
+.field .in { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); }
+.field input { width: 100%; min-width: 0; border: 0; background: transparent; color: var(--ink); font-size: 15px; padding: 7px 8px; }
+.field .u { padding-right: 8px; color: var(--muted); font: 12px var(--mono); }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.stat { border-top: 2px solid var(--line); padding-top: 6px; }
+.stat b { display: block; font: 600 20px var(--mono); }
+.stat span { font-size: 12px; color: var(--muted); }
+.stat.warn { border-color: var(--warn); } .stat.warn b { color: var(--warn); }
+.note { font-size: 13px; padding: 10px 12px; border-radius: 6px; background: var(--bg); border-left: 3px solid var(--ok); }
+.note.changed { border-left-color: var(--warn); }
+.btn { font: 700 14px var(--body); background: var(--taxi); color: var(--taxi-ink); border: 0; border-radius: 6px; padding: 10px 14px; cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+section { margin-top: 44px; display: grid; gap: 16px; }
+.sechead { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: baseline; justify-content: space-between; }
+.sechead p { margin: 0; color: var(--muted); max-width: 70ch; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--muted); }
+.legend i { display: inline-block; width: 26px; height: 0; border-top: 2px solid; vertical-align: middle; margin-right: 6px; }
+.parts { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: grid; gap: 8px; cursor: pointer; text-align: left; color: inherit; font: inherit; min-width: 0; }
+.card[aria-pressed="true"] { border-color: var(--taxi); box-shadow: 0 0 0 2px var(--taxi); }
+.card .thumb { background: var(--bg); border-radius: 6px; height: 150px; display: grid; place-items: center; padding: 8px; }
+.card { position: relative; cursor: default; }
+.cardsel { all: unset; display: grid; gap: 8px; cursor: pointer; min-width: 0; border-radius: 6px; }
+.cardsel:focus-visible { outline: 3px solid var(--taxi); outline-offset: 4px; }
+.expand { position: absolute; top: 20px; right: 20px; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; padding: 0; }
+.expand:hover { border-color: var(--taxi); }
+.expand:focus-visible { outline: 3px solid var(--taxi); outline-offset: 2px; }
+.expand svg { width: 18px; height: 18px; }
+.sheets { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); gap: 14px; }
+.sheetcard { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; min-width: 0; }
+.sheetcard .hd { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.sheetcard .hd b { font: 700 18px var(--display); letter-spacing: .02em; }
+.sheetcard .hd span { color: var(--muted); font-size: 13px; }
+.sheetcard svg { width: 100%; height: auto; display: block; }
+.sheetbg { fill: color-mix(in srgb, var(--kraft) 30%, var(--surface)); stroke: var(--kraft); }
+.sheetbg.five { fill: color-mix(in srgb, var(--kraft) 48%, var(--surface)); }
+.wave { stroke: var(--kraft); stroke-opacity: .55; }
+.lp { cursor: pointer; }
+.lp .pfill { fill: var(--surface); fill-opacity: .9; }
+.lp:hover .pfill { fill: color-mix(in srgb, var(--taxi) 30%, var(--surface)); }
+.lp[aria-pressed="true"] .pfill { fill: #ff5a1f; fill-opacity: .55; }
+.lp text { fill: var(--ink); font-family: var(--mono); font-weight: 700; pointer-events: none; }
+.sheetcard .ids { font: 12px var(--mono); color: var(--muted); }
+.flutebar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; font-size: 14px; }
+.flutebar .chip { color: var(--ink); background: var(--surface); border-color: var(--line); }
+.flutebar .chip[aria-pressed="true"] { background: var(--taxi); color: var(--taxi-ink); border-color: var(--taxi); }
+dialog.big { width: min(1200px, 96vw); height: min(92vh, 1000px); max-width: none; max-height: none; padding: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); }
+dialog.big[open] { display: grid; grid-template-rows: auto 1fr auto; }
+dialog.big::backdrop { background: rgba(8, 12, 20, .72); }
+.bighd { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.bighd h3 { font-size: 24px; }
+.bighd .sp { flex: 1; }
+.bighd .x { font: 600 18px var(--mono); width: 38px; height: 38px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; }
+.bigsvg { min-height: 0; padding: 14px; background: var(--bg); overflow: auto; }
+.bigsvg svg { width: 100%; height: 100%; display: block; }
+.bigsvg text { fill: var(--ink); font-family: Arial, Helvetica, sans-serif; }
+.bigsvg text.mk { fill: var(--mark); }
+.bigsvg .flute { stroke: var(--flute); fill: none; }
+.bigsvg .scale { stroke: var(--ink); fill: none; }
+.bigft { padding: 10px 16px 14px; border-top: 1px solid var(--line); display: grid; gap: 8px; font-size: 14px; }
+.bigft .meta { display: flex; flex-wrap: wrap; gap: 4px 18px; color: var(--muted); }
+.bigft .meta b { color: var(--ink); font-weight: 600; }
+.card svg { width: 100%; height: 100%; }
+.card .hd { display: flex; gap: 10px; align-items: center; }
+.tag { font: 700 13px var(--mono); background: var(--ink); color: var(--bg); border-radius: 4px; padding: 2px 7px; }
+.card .nm { font-weight: 700; }
+.card dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 0; font-size: 13px; }
+.card dt { color: var(--muted); } .card dd { margin: 0; }
+.card p { margin: 0; font-size: 13px; color: var(--muted); }
+svg .cut { stroke: var(--cut); fill: none; }
+svg .fold { stroke: var(--fold); stroke-dasharray: 5 3; fill: none; }
+svg .center { stroke: var(--center); stroke-dasharray: 7 3 2 3; fill: none; }
+svg .score { stroke: #1f9d55; stroke-dasharray: 2 2; fill: none; }
+.curve { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin-bottom: 14px; }
+.curve ol { margin: 6px 0 0; padding-left: 20px; display: grid; gap: 6px; font-size: 14px; }
+svg .mark { stroke: var(--mark); stroke-dasharray: 1.5 2.5; fill: none; }
+svg .fill { fill: color-mix(in srgb, var(--kraft) 22%, transparent); stroke: none; }
+.tablewrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; min-width: 620px; font-size: 14px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 600 12px var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+tr:last-child td { border-bottom: 0; }
+.cols { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 860px) { .cols { grid-template-columns: minmax(0, 1fr); } .fields, .stats { grid-template-columns: 1fr 1fr; } }
+ol.steps { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 10px; }
+ol.steps li { counter-increment: s; display: grid; grid-template-columns: 34px 1fr; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+ol.steps li::before { content: counter(s); font: 900 22px var(--display); color: var(--taxi-ink); background: var(--taxi); border-radius: 6px; display: grid; place-items: center; height: 34px; }
+ol.steps b { display: block; }
+ul.tips { margin: 0; padding-left: 18px; display: grid; gap: 8px; }
+.files { display: grid; gap: 10px; }
+.file { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+.file b { font-family: var(--mono); font-size: 14px; }
+.file p { margin: 4px 0 0; font-size: 13px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+body { margin: 0; }
+a.file { display: block; color: inherit; text-decoration: none; }
+a.file:hover { border-color: var(--taxi); }
+a.file:focus-visible { outline: 3px solid var(--taxi); outline-offset: 2px; }
+.sub { font: 600 11px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); grid-column: 1 / -1; margin-top: 2px; }
+.field .hint { font: 11px var(--mono); color: var(--muted); }
+.ref { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 860px) { .ref { grid-template-columns: minmax(0, 1fr); } }
+.ref img { width: 100%; border-radius: 10px; border: 1px solid var(--line); background: #fff; display: block; }
+.ref ul { margin: 0; padding-left: 18px; display: grid; gap: 8px; }
+.lampwrap { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 14px; margin-bottom: 14px; }
+@media (max-width: 760px) { .lampwrap { grid-template-columns: 1fr; } }
+.lampv { aspect-ratio: 4 / 3; }
+.lamptext { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 8px; align-content: start; }
+.lamptext h3 { font-size: 24px; }
+.lamptext p { margin: 0; font-size: 15px; }
+.lamptext .lampkey { font-size: 13px; color: var(--muted); }
+.llabels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.llab { position: absolute; transform: translate(-50%, -50%); font: 600 11px var(--mono); color: #fff; background: rgba(10, 20, 30, .62); padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
+.llab.on { background: #ff5a1f; }
+.tubes { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 14px; }
+.tstep { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.tstep h3 { display: flex; gap: 10px; align-items: center; font-size: 21px; }
+.tstep h3 span { font: 900 18px var(--display); background: var(--taxi); color: var(--taxi-ink); border-radius: 6px; width: 30px; height: 30px; display: grid; place-items: center; flex: none; }
+.tstep p { margin: 0; font-size: 14px; }
+.tstep svg { width: 100%; height: auto; display: block; }
+.tstep text { font: 11px var(--mono); fill: var(--ink); }
+.tstep text.sm { font-size: 10px; fill: var(--muted); }
+.tstep text.red { fill: #d0342c; font-weight: 700; }
+.tstep .tube { fill: color-mix(in srgb, var(--kraft) 60%, var(--surface)); stroke: var(--ink); stroke-width: 1.2; }
+.tstep .spare { fill: var(--bg); stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 2; }
+.tstep .waste { fill: #d0342c; fill-opacity: .28; stroke: none; }
+.tstep .cutl { stroke: #d0342c; stroke-width: 2; fill: none; }
+.tstep .hid { fill: none; stroke: var(--ink); stroke-width: 1; stroke-dasharray: 4 3; }
+.tstep .paper { fill: color-mix(in srgb, var(--taxi) 14%, var(--surface)); stroke: var(--muted); stroke-width: 1; }
+.tstep .body { fill: color-mix(in srgb, var(--taxi) 35%, var(--surface)); stroke: var(--ink); stroke-width: 1.2; }
+.tstep .glue { fill: none; stroke: var(--taxi); stroke-width: 5; stroke-linecap: round; }
+.tstep .rotor { fill: #8fc6ff; fill-opacity: .35; stroke: var(--ink); stroke-width: 1; }
+.tstep .tape { fill: #e9dcb0; fill-opacity: .85; stroke: #b7a46a; stroke-width: 1; }
+.tstep .dim { stroke: var(--muted); stroke-width: 1; fill: none; }
+.tstep .lensf { fill: #eef6ff; stroke: var(--ink); stroke-width: 1; }
+.tstep .glowf { fill: #fffbe3; stroke: #f2d26b; stroke-width: 1.5; }
+.tstep .trimf { fill: #c3cad4; stroke: var(--ink); stroke-width: 1; }
+.tstep .hoodf { fill: var(--taxi); stroke: var(--ink); stroke-width: 1; }
+.tstep .blackf { fill: #151515; }
+.tstep .holef { fill: var(--bg); stroke: var(--ink); stroke-width: 1.2; }
+.tstep .wire { stroke: #d0342c; stroke-width: 2; fill: none; stroke-dasharray: 5 3; }
+.wiring { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+.wiring svg { width: 100%; height: auto; display: block; }
+.wiring text { font: 12px var(--mono); fill: var(--ink); }
+.wiring .w { fill: none; stroke-width: 2.5; }
+.wiring .pos { stroke: #d0342c; } .wiring .neg { stroke: var(--ink); }
+.wiring .box { fill: var(--bg); stroke: var(--ink); stroke-width: 1.5; }
+.safety { border-left: 3px solid var(--warn); background: var(--surface); border-radius: 0 8px 8px 0; padding: 12px 14px; font-size: 14px; }
+.safety b { color: var(--warn); }
+</style>
+</head>
+<body>
+
+<div class="checker" aria-hidden="true"></div>
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Gadget Parade · cardboard skeleton v2 · sizes in cm</span>
+    <h1>SkyCab skeleton</h1>
+    <p>Built to match the four-view blueprint, then sized to the pilot. Each wall piece is unrolled from the 3D shape so it bends into place exactly. The model also shows the straps, the motor wiring and where the weight sits. Drag to turn it, and tap a part card to find that part on the model.</p>
+  </header>
+
+  <div class="top">
+    <div class="vcol">
+    <div class="viewer" id="viewer">
+      <canvas id="cv" aria-label="3D model of the SkyCab costume skeleton"></canvas>
+      <div class="vbar">
+        <div role="group" aria-label="Camera view">
+          <button class="chip" data-view="front">Front</button>
+          <button class="chip" data-view="side">Side</button>
+          <button class="chip" data-view="back">Back</button>
+          <button class="chip" data-view="top">Top</button>
+        </div>
+        <div>
+          <button class="chip" id="tApart" aria-pressed="false">Pull apart</button>
+          <button class="chip" id="tPaint" aria-pressed="true">Painted</button>
+          <button class="chip" id="tKid" aria-pressed="true">Pilot</button>
+          <button class="chip" id="tStrap" aria-pressed="true">Straps</button>
+          <button class="chip" id="tWire" aria-pressed="false">Wiring</button>
+          <button class="chip" id="tSpin" aria-pressed="false">Motors on</button>
+        </div>
+      </div>
+      <div class="pickinfo" id="pickinfo" hidden aria-live="polite"></div>
+      <div class="vhint">tap a part to name it · drag to turn · middle/right/Shift-drag or two fingers to pan · scroll or pinch to zoom · Front/Side re-centres · grid = 10 cm</div>
+    </div>
+    <div class="finder">
+      <span class="lbl">Find a part: tap a letter, it lights up orange and everything else fades</span>
+      <div class="row" id="finder"></div>
+    </div>
+    </div>
+
+    <div class="panel">
+      <h3>Pilot's measurements</h3>
+      <div class="fields">
+        <div class="field"><label for="hipW">Hip width, straight across</label><div class="in"><input id="hipW" type="number" step="0.25" min="6" max="14"><span class="u">in</span></div><span class="hint" data-cm="hipW"></span></div>
+        <div class="field"><label for="hipD">Hip depth, front to back</label><div class="in"><input id="hipD" type="number" step="0.25" min="4" max="10"><span class="u">in</span></div><span class="hint" data-cm="hipD"></span></div>
+        <div class="field"><label for="waistThigh">Waist to mid-thigh</label><div class="in"><input id="waistThigh" type="number" step="0.25" min="5" max="12"><span class="u">in</span></div><span class="hint" data-cm="waistThigh"></span></div>
+        <div class="field"><label for="height">Height</label><div class="in"><input id="height" type="number" step="0.5" min="34" max="50"><span class="u">in</span></div><span class="hint" data-cm="height"></span></div>
+        <span class="sub">Design</span>
+        <div class="field"><label for="L">Body length</label><div class="in"><input id="L" type="number" step="1" min="50" max="72"><span class="u">cm</span></div></div>
+        <div class="field"><label for="W">Body width</label><div class="in"><input id="W" type="number" step="1" min="38" max="54"><span class="u">cm</span></div></div>
+        <div class="field"><label for="span">Rotor span, tip to tip</label><div class="in"><input id="span" type="number" step="1" min="66" max="90"><span class="u">cm</span></div></div>
+        <div class="field"><label for="rotorD">Rotor diameter</label><div class="in"><input id="rotorD" type="number" step="1" min="16" max="26"><span class="u">cm</span></div></div>
+        <div class="field"><label for="tilt">Rotor lean towards audience</label><div class="in"><input id="tilt" type="number" step="1" min="0" max="30"><span class="u">deg</span></div></div>
+        <div class="field"><label for="tubeD">Tube OUTSIDE diameter (measure yours)</label><div class="in"><input id="tubeD" type="number" step="0.1" min="3" max="10"><span class="u">cm</span></div></div>
+        <div class="field"><label for="tubeL">Tube length (each)</label><div class="in"><input id="tubeL" type="number" step="0.5" min="30" max="120"><span class="u">cm</span></div></div>
+        <div class="field"><label for="lampL">Headlight length</label><div class="in"><input id="lampL" type="number" step="0.5" min="4" max="6.5"><span class="u">cm</span></div></div>
+      </div>
+      <div class="stats" id="stats"></div>
+      <div class="note" id="pdfnote"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" id="copy">Copy sizes for Claude</button>
+        <button class="btn ghost" id="reset">Reset to the pilot's sizes</button>
+      </div>
+      <textarea id="copyfall" readonly hidden style="width:100%;font:12px var(--mono);background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:8px" rows="3"></textarea>
+    </div>
+  </div>
+
+  <section>
+    <div class="sechead"><h2>Blueprint vs build</h2><p>The shapes come from this sheet. The sizes come from the pilot, with a few changes so she can wear it.</p></div>
+    <div class="ref">
+      <img src="ref-blueprint.jpg" alt="Four-view SkyCab blueprint: front, side, back and top views with dimensions">
+      <ul id="devs"></ul>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead">
+      <h2>Printed stencils</h2>
+      <div class="legend">
+        <span><i style="border-color:var(--cut)"></i>cut</span>
+        <span><i style="border-color:var(--fold);border-top-style:dashed"></i>fold (glue tabs)</span>
+        <span><i style="border-color:#1f9d55;border-top-style:dotted"></i>press line</span>
+        <span><i style="border-color:var(--center);border-top-style:dashed"></i>centre line: flip here</span>
+        <span><i style="border-color:var(--mark);border-top-style:dotted"></i>placement mark</span>
+      </div>
+    </div>
+    <div class="curve">
+      <h3>How the curves work</h3>
+      <ol>
+        <li><b>Flutes top to bottom.</b> Line up the brown FLUTES arrow with the ridges inside the cardboard. Bent that way, cardboard curves smoothly instead of kinking.</li>
+        <li><b>Pre-roll.</b> Before gluing, roll each wall piece over a table edge or a rolling pin, printed side out, until it holds a gentle curve by itself.</li>
+        <li><b>Green press lines</b> run across every wall piece, 2 cm apart, along the lines it has to bend on. The pieces fan out, so towards one end the bend runs up to 25° across the flutes and would kink without them. On the inside face, run a blunt butter knife or an empty ballpoint firmly along each one. Press, don't cut. Then bend a little at every line, like closing a fan: the wall goes round in small even steps.</li>
+        <li><b>Glue tabs.</b> Every wall edge has a row of tabs with V gaps between them. Fold them inward along the blue dashed line; the gaps let them follow the curve. Hot-glue them under the deck and to the belt and bottom rings.</li>
+        <li><b>Tape while it sets.</b> Hold each joint with masking tape on the outside. The paper skin later hides the small facets from the press lines.</li>
+        <li><b>Strips: rotor rim R3 and seat strip R8.</b> Cut them so the waves run ACROSS the strip; the cutting layouts already do this. Roll the strip round a 2-litre bottle, smooth side out, moving along a little at a time. Then let it spring open: it will sit on the 22 cm rotor disc (R3) or round the 6 cm seat corners (R8) without a crease. Hold it with clothes pegs or a rubber band while the glue sets.</li>
+        <li><b>Still fighting you?</b> Mist the inside face lightly with a spray bottle (damp, not wet), roll it round the bottle again, peg it and let it dry: it keeps the curve. For anything tighter than a jam jar, peel the paper off the inside face so the ridges show; it then bends like a hinge, and the smooth outside stays neat.</li>
+      </ol>
+    </div>
+    <div class="parts" id="parts"></div>
+  </section>
+
+  <section>
+    <div class="sechead"><h2>Ruler cuts</h2><p>Straight strips and tube lengths, measured with a steel ruler. Every cut on the tubes themselves has a printed paper guide: O for the strut ends, P for the pods.</p></div>
+    <div class="curve">
+      <h3>Tubes that don't go floppy</h3>
+      <ol>
+        <li><b>Best: cardboard mailing tubes</b>. It's recyclable and stiff. The ones bought are 7.0 cm across (22 cm round the outside) and 59 cm long. The strut R1 must be one unbroken piece, so one tube gives the strut, and a second tube gives both pods R2: you need 2, or 3 with a spare. Measure the diameter and type it into "Tube diameter" above so guides O and P fit it exactly.</li>
+        <li><b>Also good:</b> aluminium-foil or cling-film roll cores. They're much thicker than kitchen-roll tubes. Join two end to end with a 6 cm sleeve cut from a third, glued inside.</li>
+        <li><b>Make your own:</b> roll 3 layers of cereal-box card round a bottle of the right size, with PVA glue brushed between the layers. Leave it to dry overnight on the bottle. Rolled corrugated cardboard is too soft for the strut.</li>
+        <li><b>Stiffer still:</b> push a 1 cm wooden dowel or two bamboo skewers through the strut beside the wires and glue the ends. Then the rotors can't droop.</li>
+      </ol>
+    </div>
+    <div class="tablewrap"><table><thead><tr><th>Part</th><th>Size</th><th>Cut</th><th>How</th></tr></thead><tbody id="ruler"></tbody></table></div>
+  </section>
+
+  <section>
+    <div class="sechead"><h2>Fitting the tubes</h2><p>The strut R1 runs across the body just under the deck, and a motor pod R2 stands upright on each end. Drawn to scale from your sizes. Tap a part in the 3D model (R1, R2, O or P) to see where it goes.</p></div>
+    <div class="tubes" id="tubes"></div>
+  </section>
+  <section>
+    <div class="sechead"><h2>Inside a rotor</h2><p>How the motor is held: it sits in a socket in the two-layer disc Q, wrapped in collar R9, with the shaft up through the top layer. Shown upright and without the pod tube; on the costume it leans 20° towards the audience. Drawn to scale from your sizes.</p></div>
+    <div class="lampwrap">
+      <div class="viewer lampv" id="rotorViewer">
+        <canvas id="rcv" aria-label="3D model of one rotor head, layer by layer"></canvas>
+        <div class="llabels" id="rlabels" aria-hidden="true"></div>
+        <div class="pickinfo" id="rpick" hidden aria-live="polite"></div>
+        <div class="vbar">
+          <div role="group" aria-label="Build step">
+            <button class="chip" data-rs="0" aria-pressed="true">Built</button><button class="chip" data-rs="1" aria-pressed="false">1</button><button class="chip" data-rs="2" aria-pressed="false">2</button><button class="chip" data-rs="3" aria-pressed="false">3</button><button class="chip" data-rs="4" aria-pressed="false">4</button><button class="chip" data-rs="5" aria-pressed="false">5</button><button class="chip" data-rs="6" aria-pressed="false">6</button>
+          </div>
+          <div>
+            <button class="chip" id="rExplode" aria-pressed="false">Pull apart</button><button class="chip" id="rCut" aria-pressed="false">Cut in half</button><button class="chip" id="rTube" aria-pressed="false">Tube</button><button class="chip" id="rSpin" aria-pressed="false">Motor on</button>
+          </div>
+        </div>
+        <div class="vhint">tap a part · drag to turn · middle/right/Shift-drag or two fingers to pan · scroll or pinch to zoom · step buttons re-centre</div>
+      </div>
+      <div class="lamptext">
+        <div class="eyebrow" id="rotorStepNo">All together</div>
+        <h3 id="rotorStepTitle"></h3>
+        <p id="rotorStepText"></p>
+        <p class="lampkey"><b>Top → bottom:</b> clear cover · blades J on the bottle-cap hub · lip ring I · rim R3 · disc Q top layer (shaft hole) · disc Q layer 2 (motor socket) · motor in collar R9 · collar Y round the pod tube</p>
+      </div>
+    </div>
+  </section>
+  <section>
+    <div class="sechead"><h2>Building the seat</h2><p>The seat back is a hollow box: a two-layer front panel E and a single back panel E joined by edge strip R8, standing on the deck right over rear beam D2. The tail fin K is glued to its back and the TAXI sign L sits on top. Drawn to scale from your sizes.</p></div>
+    <div class="lampwrap">
+      <div class="viewer lampv" id="seatViewer">
+        <canvas id="scv" aria-label="3D model of the seat, tail fin and TAXI sign, layer by layer"></canvas>
+        <div class="llabels" id="slabels" aria-hidden="true"></div>
+        <div class="pickinfo" id="spick" hidden aria-live="polite"></div>
+        <div class="vbar">
+          <div role="group" aria-label="Build step">
+            <button class="chip" data-ss="0" aria-pressed="true">Built</button><button class="chip" data-ss="1" aria-pressed="false">1</button><button class="chip" data-ss="2" aria-pressed="false">2</button><button class="chip" data-ss="3" aria-pressed="false">3</button><button class="chip" data-ss="4" aria-pressed="false">4</button><button class="chip" data-ss="5" aria-pressed="false">5</button><button class="chip" data-ss="6" aria-pressed="false">6</button>
+          </div>
+          <div>
+            <button class="chip" id="sExplode" aria-pressed="false">Pull apart</button><button class="chip" id="sCut" aria-pressed="false">Cut in half</button>
+          </div>
+        </div>
+        <div class="vhint">tap a part · drag to turn · middle/right/Shift-drag or two fingers to pan · scroll or pinch to zoom · step buttons re-centre</div>
+      </div>
+      <div class="lamptext">
+        <div class="eyebrow" id="seatStepNo">All together</div>
+        <h3 id="seatStepTitle"></h3>
+        <p id="seatStepText"></p>
+        <p class="lampkey"><b>Front → back:</b> seat front E (layer 2, then layer 1 with the deck tab) · edge strip R8 round the sides and top · seat back E · tail fin K (two sides) · TAXI sign L on top · deck A and rear beam D2 underneath</p>
+      </div>
+    </div>
+  </section>
+  <section>
+    <div class="sechead"><h2>Glue guide</h2><p>The whole costume weighs under a kilo, so most joints carry almost nothing. Spend your effort on the few that take the load. Tap a row to light that part up on the 3D model.</p></div>
+    <div class="cols">
+      <div class="tablewrap"><table style="min-width:0"><thead><tr><th>Joint</th><th>Why it matters</th><th>Glue</th></tr></thead><tbody id="glue">
+        <tr data-part="A" tabindex="0"><td><span class="tag">A</span> <span class="tag">E</span> Strap slots in the deck and backrest</td><td>The whole costume hangs from them</td><td>Fevicol MR between the two layers, pressed overnight. Bottle-cap washers under the strap knots spread the pull.</td></tr>
+        <tr data-part="R1" tabindex="0"><td><span class="tag">R1</span> Strut to front beam D1 and through the walls</td><td>Carries both rotors, 74 cm tip to tip</td><td>Hot glue bead all round, then masking tape over it</td></tr>
+        <tr data-part="R2" tabindex="0"><td><span class="tag">R2</span> Strut to pods (fish-mouth joints)</td><td>Long lever, gets bumped</td><td>Hot glue inside and outside the joint, then tape</td></tr>
+        <tr data-part="Y" tabindex="0"><td><span class="tag">Y</span> <span class="tag">Q</span> <span class="tag">R9</span> Rotor disc on the pod top, motor in its socket</td><td>The motor shakes it</td><td>Hot glue on every collar tab and all round the motor collar R9</td></tr>
+        <tr data-part="C1" tabindex="0"><td><span class="tag">C1</span>-<span class="tag">C4</span> All other tabbed joints</td><td>Hold the shape, carry little weight</td><td>Hot glue on each tab</td></tr>
+        <tr data-part="D1" tabindex="0"><td><span class="tag">D1</span> <span class="tag">D2</span> <span class="tag">Q</span> Two-layer parts glued face to face</td><td>Two 3-ply layers act as one stiff board</td><td>Fevicol MR, thin coat, pressed under books overnight</td></tr>
+      </tbody></table></div>
+      <div class="curve">
+        <h3>Which glue for what</h3>
+        <ol>
+          <li><b>Hot glue gun</b>, normal temperature (40-60 W, 11 mm sticks): for every tab and every tube joint. It soaks into the paper and grips in about 10 seconds. Low-temperature guns grip cardboard noticeably less.</li>
+          <li><b>Fevicol MR</b> (white glue): for anything glued flat, face to face. Strongest once fully dry, wipes off while wet. Spread it thin with a scrap of card; a thick coat makes the card wavy.</li>
+          <li><b>Both together</b> where you want the most strength: Fevicol over most of the tab and a few dots of hot glue to hold it straight away.</li>
+          <li><b>Skip</b> Fevikwik (goes brittle on cardboard) and stringy rubber-based glues.</li>
+        </ol>
+        <h3 style="margin-top:14px">What makes it strong</h3>
+        <ol>
+          <li>Glue the whole tab, not a dot in the middle, and press each one for a full 10 seconds.</li>
+          <li>Leave Fevicol parts overnight before cutting slots or bending them.</li>
+          <li>Finish with a hot-glue bead along the inside seams where the walls meet the deck and the rings.</li>
+          <li>Test before painting: wear it, shake it gently, tug the rotors. Anything that creaks gets another bead.</li>
+          <li>Hot glue burns, so an adult should do the gluing; keep a bowl of cold water nearby.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+  <section>
+    <div class="sechead"><h2>Making the headlights</h2><p>An egg-shaped window in wall C1 with a white lens behind it and a small closed card light box behind that, so the whole egg glows. Everything is glued flat with tabs: nothing sticks out to knock off. Drawn to scale from your sizes.</p></div>
+    <div class="lampwrap">
+      <div class="viewer lampv" id="lampViewer">
+        <canvas id="lcv" aria-label="3D model of one headlight, layer by layer"></canvas>
+        <div class="llabels" id="llabels" aria-hidden="true"></div>
+        <div class="pickinfo" id="lpick" hidden aria-live="polite"></div>
+        <div class="vbar">
+          <div id="lampSteps" role="group" aria-label="Build step">
+            <button class="chip" data-ls="0" aria-pressed="true">Built</button><button class="chip" data-ls="1" aria-pressed="false">1</button><button class="chip" data-ls="2" aria-pressed="false">2</button><button class="chip" data-ls="3" aria-pressed="false">3</button><button class="chip" data-ls="4" aria-pressed="false">4</button><button class="chip" data-ls="5" aria-pressed="false">5</button><button class="chip" data-ls="6" aria-pressed="false">6</button>
+          </div>
+          <div>
+            <button class="chip" id="lExplode" aria-pressed="false">Pull apart</button><button class="chip" id="lCut" aria-pressed="false">Cut in half</button><button class="chip" id="lOn" aria-pressed="true">Light on</button>
+          </div>
+        </div>
+        <div class="vhint">tap a part · drag to turn · middle/right/Shift-drag or two fingers to pan · scroll or pinch to zoom · step buttons re-centre</div>
+      </div>
+      <div class="lamptext">
+        <div class="eyebrow" id="lampStepNo">The finished headlight</div>
+        <h3 id="lampStepTitle"></h3>
+        <p id="lampStepText"></p>
+        <p class="lampkey"><b>Outside → inside:</b> trim U + hood R7 · the body's upper front wall C1 (egg window cut into it) · lens V · light box side W · box back X · LED</p>
+      </div>
+    </div>
+    <div class="tubes" id="lamps"></div>
+  </section>
+  <section>
+    <div class="sechead"><h2>Cutting layouts</h2><p>Where to trace each stencil on your cardboard sheets, with every part's waves running the right way. Smaller parts sit inside the holes of the rings, so very little is wasted. Tap a part to find it on the model.</p></div>
+    <div class="flutebar" role="group" aria-label="Which way the waves run in your sheets">
+      <span>The waves in my sheets run along the</span>
+      <button class="chip" data-flute="short" aria-pressed="true">short side</button>
+      <button class="chip" data-flute="long" aria-pressed="false">long side</button>
+      <span style="color:var(--muted)">(look at the cut edge of the sheet)</span>
+    </div>
+    <div class="flutebar" role="group" aria-label="Which cardboard you can get">
+      <span>Cardboard I can get:</span>
+      <button class="chip" data-board="only3" aria-pressed="true">only 3-ply</button>
+      <button class="chip" data-board="mixed" aria-pressed="false">3-ply and 5-ply</button>
+      <span style="margin-left:12px">Sheet size:</span>
+      <span class="in" style="display:inline-flex;align-items:center;gap:4px"><input id="shA" type="number" min="18" max="60" step="0.5" value="25" aria-label="Sheet short side in inches" style="width:64px"> × <input id="shB" type="number" min="24" max="80" step="0.5" value="38" aria-label="Sheet long side in inches" style="width:64px"> in</span>
+    </div>
+    <div class="note" id="sheetsum" style="margin-bottom:12px"></div>
+    <div class="flutebar" role="group" aria-label="What the print shop prints on">
+      <span>The print shop prints on:</span>
+      <button class="chip" data-paper="roll" aria-pressed="true">36-inch roll</button>
+      <button class="chip" data-paper="a0" aria-pressed="false">A0 / A2 sheets</button>
+    </div>
+    <div class="flutebar">
+      <button class="btn" id="dlSheets">Download the print file (36-inch roll)</button>
+      <button class="btn ghost" id="dlA4">Download A4 stencils (these sizes)</button>
+      <span id="dlnote" style="color:var(--muted);font-size:13px">Made on this page from the current measurements, sheet size and wave direction.</span>
+    </div>
+    <div class="sheets" id="sheets"></div>
+  </section>
+  <section>
+    <div class="sechead"><h2>Motors and wiring</h2><p>Battery box hidden under the deck behind her; its switch is your master switch and turns the headlights on. Wires are taped under the right-hand deck edge: one pair through the pilot's TAKE-OFF button to both motors, one pair on to the headlights. No fancy channels needed.</p></div>
+    <div class="cols">
+      <div class="wiring">
+        <svg viewBox="0 0 520 335" role="img" aria-label="Wiring diagram: a 3 x AA battery box with master switch feeds two motors through the take-off button, and two headlight LEDs, each with a resistor, directly">
+          <rect class="box" x="20" y="125" width="120" height="75" rx="6"/>
+          <text x="80" y="150" text-anchor="middle">3 x AA box</text><text x="80" y="167" text-anchor="middle">+ master</text><text x="80" y="184" text-anchor="middle">switch</text>
+          <text x="80" y="220" text-anchor="middle" style="font-size:10px">under the deck,</text><text x="80" y="234" text-anchor="middle" style="font-size:10px">behind her</text>
+          <path class="w pos" d="M140 140 H170 V60 H192"/><path class="w pos" d="M218 60 H270 V22 H360"/><path class="w pos" d="M270 60 V102 H360"/>
+          <circle cx="205" cy="60" r="12" fill="#d0342c" stroke="currentColor" stroke-width="1.5"/>
+          <text x="205" y="38" text-anchor="middle" style="font-size:11px">TAKE-OFF</text>
+          <path class="w pos" d="M170 140 V217 H300"/><path class="w pos" d="M330 217 H360"/><path class="w pos" d="M280 217 V287 H300"/><path class="w pos" d="M330 287 H360"/>
+          <rect class="box" x="300" y="211" width="30" height="12" rx="2"/><rect class="box" x="300" y="281" width="30" height="12" rx="2"/>
+          <text x="315" y="206" text-anchor="middle" style="font-size:10px">100 Ω</text><text x="315" y="276" text-anchor="middle" style="font-size:10px">100 Ω</text>
+          <path class="w neg" d="M140 185 H230"/><path class="w neg" d="M230 38 V303"/>
+          <path class="w neg" d="M230 38 H360"/><path class="w neg" d="M230 118 H360"/><path class="w neg" d="M230 233 H360"/><path class="w neg" d="M230 303 H360"/>
+          <circle cx="170" cy="140" r="4" fill="#d0342c"/><circle cx="270" cy="60" r="4" fill="#d0342c"/><circle cx="280" cy="217" r="4" fill="#d0342c"/>
+          <circle cx="230" cy="185" r="4" fill="currentColor"/><circle cx="230" cy="118" r="4" fill="currentColor"/><circle cx="230" cy="233" r="4" fill="currentColor"/>
+          <rect class="box" x="360" y="10" width="140" height="40" rx="20"/><text x="430" y="35" text-anchor="middle">left motor</text>
+          <rect class="box" x="360" y="90" width="140" height="40" rx="20"/><text x="430" y="115" text-anchor="middle">right motor</text>
+          <rect class="box" x="360" y="205" width="140" height="40" rx="6"/><text x="430" y="230" text-anchor="middle">left headlight LED</text>
+          <rect class="box" x="360" y="275" width="140" height="40" rx="6"/><text x="430" y="300" text-anchor="middle">right headlight LED</text>
+          <text x="20" y="300" style="font-size:11px">red = +, black = −</text>
+          <text x="20" y="316" style="font-size:11px">LED long leg = +</text>
+          <text x="240" y="160" style="font-size:10px">motors: through button</text><text x="240" y="174" style="font-size:10px">lights: always on</text>
+        </svg>
+      </div>
+      <div class="tablewrap"><table style="min-width:0"><thead><tr><th>You need</th><th>Where it goes</th></tr></thead><tbody id="elec"></tbody></table></div>
+    </div>
+    <div class="safety"><b>Finger safety.</b> These small motors spin at several thousand rpm. Use soft card blades, never hard plastic. Close each rotor with a clear disc on top and underneath, and fit the battery box where only you can reach the switch. It runs on 3 × AA (4.5 V), which the motors are rated for. Use AA batteries, never coin cells.</div>
+  </section>
+
+  <section>
+    <div class="cols">
+      <div style="display:grid;gap:14px">
+        <h2>Build order</h2>
+        <ol class="steps">
+          <li><div><b>Print and check scale.</b> Print at 100% (Actual size). Measure the 10 × 10 cm square on page 1 both ways before cutting anything.</div></li>
+          <li><div><b>Paper fitting.</b> Tape the deck tiles (A), cut out the waist hole and slip it over her like a skirt. If it pinches, change her sizes here and ask for new stencils.</div></li>
+          <li><div><b>Trace onto cardboard.</b> Match each FLUTES arrow to the ridges. Half patterns: trace, flip on the red line, trace again.</div></li>
+          <li><div><b>Deck and beams.</b> Cut the deck, waist hole and strap slots. Glue beams D1 and D2 under the deck on the dotted lines.</div></li>
+          <li><div><b>Upper walls.</b> Pre-roll each piece, press the green lines, fold the edge tabs in. Join C1 + C2 for each side with joiner strips. Glue the top edge to the deck edge from the nose backwards, then glue the belt ring B1 inside the bottom edge.</div></li>
+          <li><div><b>Lower walls.</b> Pre-roll, press the green lines, fold the tabs in. Join C3 + C4 for each side, glue them to the belt ring, then glue bottom ring B2 inside the bottom edge. The crease at the belt is where the checker stripe goes.</div></li>
+          <li><div><b>Strut and pods.</b> Follow "Fitting the tubes": cut the 2 mailing tubes, shape the pods with template P, cut a fish-mouth on both strut ends with guide O, push the strut through both wall holes, glue it to beam D1, then glue a pod upright on each end.</div></li>
+          <li><div><b>Motor wires.</b> Solder leads to both motors first, and run the wires through the strut and up into each pod before the pods are glued on (tube step 5). The motors themselves go in with the rotors, next.</div></li>
+          <li><div><b>Rotors.</b> Wrap each motor in collar R9 until it just fits the socket in the bottom layer of base disc Q, push it in until the motor face touches the top layer, shaft up through the centre hole, and hot-glue round the collar. Spin the shaft by hand to check it stands square. Wrap collar Y round the top of the pod tube, curved edge flush with the slanted top, and fold its tabs out flat. Glue Q onto the tube top and the collar tabs, on its oval mark, with the motor hanging inside the pod and the wires running down it. Run a bead of hot glue round the outside of the join under Q. Wrap rim R3 round Q with its bottom tabs glued under Q and its top tabs folded in, then glue lip ring I onto the top tabs. Press the bottle-cap hub (open side up) with four card blades onto the shaft, then tape a clear disc on top.</div></li>
+          <li><div><b>Seat, tail, sign.</b> Glue the front seat panel E to the deck (its tab folds into the box). Glue one row of R8's tabs to the inside of it round the sides and top. Run glue along R8's other row of tabs and the back panel's deck tab, and press the back panel on. Cut the back, top and front edge tabs off the flipped tail fin side K. Bend both sides on the green lines, glue their base tabs to the deck and up the back of the seat, then glue the remaining edge tabs inside the other side. Fold the TAXI box L and glue its bottom tabs to the top of the seat.</div></li>
+          <li><div><b>Battery, button, wiring.</b> Velcro the battery box under the deck behind her. Push the 16 mm button through its hole on the right-hand deck rim. Wire: battery, through the hole in D2, taped under the right deck edge to the button, then into the strut tube. Tape the headlight wire alongside it to the nose. Test the motors now, before painting.</div></li>
+          <li><div><b>Face and tail lights.</b> Paint the nose panel black. Headlights: glue white lens V behind each egg-shaped window in C1. Make the light box: cut out strip W with its V notches, paint the middle white, glue its top tabs to the inside of the wall round the window (over the lens), push a 10 mm LED (resistor on its long leg) through the centre of back X from behind, hot-glue it, and glue X onto W's back tabs. On the outside, glue trim U round the window and hood R7 over it like an eyelid. Wire both straight to the battery. Paint the rear panel black and glue the red tail lights M at the corners.</div></li>
+          <li><div><b>Windshield, dashboard, straps.</b> Glue dashboard G in place, then cut windshield S from clear plastic, fold its tabs out and tape them along line S on the deck. Black electrical tape on the top edge. Thread the straps and do a fit test: walk, turn, climb a step, salute.</div></li>
+          <li><div><b>Skin and paint (no full papier-mâché).</b> Masking tape over every seam and cut edge. Then one layer of plain paper (newspaper or brown kraft) brushed on with PVA glue mixed 2 parts glue to 1 part water, over the body, seat and fin only. Let it dry overnight, give it one coat of white primer, then paint. Mask the rotors and windshield first. <b>Like the blueprint:</b> a checker stripe of two rows of 2 cm squares just below the belt crease, from the black nose back to just before the tail lights. Paint a 4 cm white band, then stick on 2 cm squares of black electrical tape like a chessboard. Paint a big black "01" (about 4 cm tall) on each upper side wall, between the headlight and the strut. Add a dark grey strip along the bottom edge.</div></li>
+        </ol>
+      </div>
+      <div style="display:grid;gap:14px;align-content:start">
+        <h2>Getting it accurate</h2>
+        <ul class="tips">
+          <li>Turn off "Fit to page" when printing. Most printers shrink pages by 3–6% by default, enough to make the walls miss the deck.</li>
+          <li>For the most accurate result, print the A0 file at a print or plotter shop. No taping.</li>
+          <li>Cut the paper templates exactly on the line, then trace with a sharp pencil held upright.</li>
+          <li>Use a fresh blade and a steel ruler, and make several light passes instead of one hard one.</li>
+          <li>Dry-fit each wall with masking tape before gluing. The four quarters should meet at the nose, both sides and the rear.</li>
+          <li>Run the flutes of the two seat panels in different directions (one up and down, one across). The seat box is then very stiff.</li>
+          <li>Check the balance (red dot on the model). If the nose dips when she wears it, tape a spare AA pair under the deck next to the battery box.</li>
+        </ul>
+        <h3 style="margin-top:8px">Stencil files</h3>
+        <div class="files">
+          <a class="file" href="SkyCab-stencils-A4.pdf" target="_blank"><b>SkyCab-stencils-A4.pdf</b><p id="a4info">Home printer, tiled pages with a 5 cm grid and trim marks.</p></a>
+          <a class="file" href="SkyCab-stencils-A0.pdf" target="_blank"><b>SkyCab-stencils-A0.pdf</b><p>Two 84 × 119 cm sheets for a print shop.</p></a>
+          <a class="file" href="SkyCab-PRINT-THIS-36in-roll.pdf" target="_blank"><b>SkyCab-PRINT-THIS-36in-roll.pdf</b><p><b>The one file for the print shop.</b> 36-inch roll, 100% / actual size: 5 cardboard-sheet pages (waves along the short side, 25 x 38 in, only 3-ply), then the other-parts page last.</p></a>
+          <a class="file" href="SkyCab-cardboard-sheets-36in-roll-waves-short-side.pdf" target="_blank"><b>SkyCab-cardboard-sheets-36in-roll-waves-short-side.pdf</b><p>For a 36-inch roll printer: one 914 x 1057 mm length per cardboard sheet, at actual size, sheet turned so its short side runs across the roll. Waves along the short side.</p></a>
+          <a class="file" href="SkyCab-other-parts-36in-roll.pdf" target="_blank"><b>SkyCab-other-parts-36in-roll.pdf</b><p>For a 36-inch roll printer: every part that is not corrugated cardboard on one 914 x 393 mm length.</p></a>
+          <a class="file" href="SkyCab-cardboard-sheets-A0-waves-short-side.pdf" target="_blank"><b>SkyCab-cardboard-sheets-A0-waves-short-side.pdf</b><p>Best for the market printer: one A0 print per cardboard sheet, at actual size, laid out like "Cutting layouts". Use this if your sheets' waves run along the short side.</p></a>
+          <a class="file" href="SkyCab-cardboard-sheets-A0-waves-long-side.pdf" target="_blank"><b>SkyCab-cardboard-sheets-A0-waves-long-side.pdf</b><p>The same, for sheets whose waves run along the long side.</p></a>
+          <a class="file" href="SkyCab-other-parts-A2.pdf" target="_blank"><b>SkyCab-other-parts-A2.pdf</b><p>Two A2 prints: windshield, TAXI box, blades, tail lights, headlight pieces and the two paper guides.</p></a>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<dialog class="big" id="big" aria-labelledby="bigTitle">
+  <div class="bighd"><span class="tag" id="bigTag"></span><h3 id="bigTitle"></h3><span class="sp"></span>
+    <button class="btn ghost" id="bigFind">Find on model</button><button class="x" id="bigClose" aria-label="Close">✕</button></div>
+  <div class="bigsvg" id="bigSvg"></div>
+  <div class="bigft" id="bigInfo"></div>
+</dialog>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="geometry.js"></script>
+<script src="pdf-kit.js"></script>
+<script>
+(() => {
+  const S = window.SkyCab, D = S.DEFAULTS, IN = 2.54;
+  const KID = ['hipW', 'hipD', 'waistThigh', 'height'], DES = ['L', 'W', 'span', 'rotorD', 'tilt', 'tubeD', 'tubeL', 'lampL'];
+  const state = { over: {}, painted: true, kid: true, strap: true, wire: false, spin: false, sel: null, flute: 'short', only3: true, sheetIn: [25, 38], apart: false, ex: 0 };
+  try { const sv = JSON.parse(localStorage.getItem('skycab-v2') || 'null'); if (sv && sv.over) state.over = sv.over; } catch (e) {}
+  const $ = id => document.getElementById(id);
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const val = k => state.over[k] != null ? state.over[k] : D[k];
+  let model, layout;
+
+  function fillInputs() {
+    KID.forEach(k => { $(k).value = +(val(k) / IN).toFixed(2); });
+    DES.forEach(k => { $(k).value = val(k); });
+    hints();
+  }
+  function hints() { document.querySelectorAll('[data-cm]').forEach(el => { el.textContent = '= ' + val(el.dataset.cm).toFixed(1) + ' cm'; }); }
+  function readInputs() {
+    KID.concat(DES).forEach(k => {
+      const el = $(k), v = parseFloat(el.value);
+      if (!isFinite(v)) return;
+      let c = Math.min(+el.max, Math.max(+el.min, v));
+      if (KID.includes(k)) c = Math.round(c * 100) / 100 * IN;
+      if (Math.abs(c - D[k]) < 0.05) delete state.over[k]; else state.over[k] = c;
+    });
+    try { localStorage.setItem('skycab-v2', JSON.stringify({ over: state.over })); } catch (e) {}
+    hints();
+  }
+
+  // ---------- lists ----------
+  function svgFor(part) {
+    const pad = Math.max(part.w, part.h) * 0.04;
+    const pathD = pa => 'M' + pa.pts.map(q => q[0].toFixed(2) + ' ' + q[1].toFixed(2)).join(' L') + (pa.closed ? ' Z' : '');
+    const outline = part.paths.filter(pa => pa.kind === 'cut' && pa.closed).sort((a, b) => b.pts.length - a.pts.length)[0];
+    let s = `<svg viewBox="${-pad} ${-pad} ${part.w + 2 * pad} ${part.h + 2 * pad}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">`;
+    if (outline) s += `<path class="fill" d="${pathD(outline)}"/>`;
+    part.paths.forEach(pa => { s += `<path class="${pa.kind}" vector-effect="non-scaling-stroke" stroke-width="${pa.kind === 'cut' ? 1.6 : 1.2}" d="${pathD(pa)}"/>`; });
+    return s + '</svg>';
+  }
+  function pagesFor(id) {
+    const pg = [];
+    layout.pages.forEach((p, i) => { if (p.sheet.items.some(it => it.part.id === id)) pg.push(i + 2); });
+    return pg.length > 1 ? `${pg[0]}–${pg[pg.length - 1]}` : String(pg[0]);
+  }
+  const EXPAND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg>';
+  // full stencil drawing for the pop-up: every line, label and flute arrow, with a 5 cm scale bar
+  function bigSvgFor(part) {
+    const pad = 1.5, sb = 2.5, PT = 0.03528 * 1.7; // labels drawn larger than print size so they read on screen
+    const pathD = pa => 'M' + pa.pts.map(q => q[0].toFixed(2) + ' ' + q[1].toFixed(2)).join(' L') + (pa.closed ? ' Z' : '');
+    const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    const outline = part.paths.filter(pa => pa.kind === 'cut' && pa.closed).sort((a, b) => b.pts.length - a.pts.length)[0];
+    let s = `<svg viewBox="${-pad} ${-pad} ${part.w + 2 * pad} ${part.h + 2 * pad + sb}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Stencil ${part.id}, ${esc(part.name)}">`;
+    s += '<defs><marker id="arr" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--flute)"/></marker></defs>';
+    if (outline) s += `<path class="fill" d="${pathD(outline)}"/>`;
+    part.paths.forEach(pa => { s += `<path class="${pa.kind}" vector-effect="non-scaling-stroke" stroke-width="${pa.kind === 'cut' ? 2 : 1.6}" d="${pathD(pa)}"/>`; });
+    if (part.flutes) { const [a, b] = part.flutes; s += `<path class="flute" vector-effect="non-scaling-stroke" stroke-width="1.6" marker-start="url(#arr)" marker-end="url(#arr)" d="M${a[0]} ${a[1]} L${b[0]} ${b[1]}"/><text x="${(a[0] + b[0]) / 2 + 0.3}" y="${(a[1] + b[1]) / 2}" font-size="${7 * PT}" fill="var(--flute)">FLUTES</text>`; }
+    part.texts.forEach(t => {
+      const anchor = t.anchor === 'start' ? 'start' : t.anchor === 'end' ? 'end' : 'middle';
+      s += `<text x="${t.x}" y="${t.y}" font-size="${(t.size || 8) * PT}" text-anchor="${anchor}"${t.bold ? ' font-weight="700"' : ''}${t.color === 'mark' ? ' class="mk"' : ''}>${esc(t.t)}</text>`;
+    });
+    const y0 = part.h + pad + 0.8;
+    s += `<path class="scale" vector-effect="non-scaling-stroke" stroke-width="1.6" d="M0 ${y0} L5 ${y0} M0 ${y0 - 0.25} L0 ${y0 + 0.25} M5 ${y0 - 0.25} L5 ${y0 + 0.25}"/><text x="5.4" y="${y0 + 0.15}" font-size="${8 * PT}">5 cm</text>`;
+    return s + '</svg>';
+  }
+  function openBig(id) {
+    const pt = model.parts.find(q => q.id === id); if (!pt) return;
+    $('bigTag').textContent = pt.id; $('bigTitle').textContent = pt.name; $('bigSvg').innerHTML = bigSvgFor(pt);
+    $('bigInfo').innerHTML = `<div class="meta"><span>Cut <b>${pt.cut}</b></span><span>Size <b class="num">${pt.w.toFixed(1)} × ${pt.h.toFixed(1)} cm</b></span><span>From <b>${pt.mat}</b></span><span>A4 pages <b class="num">${pagesFor(pt.id)}</b></span></div><div>${pt.note}</div>`
+      + document.querySelector('.legend').outerHTML;
+    $('big').dataset.part = id;
+    if (!$('big').open) $('big').showModal();
+  }
+  function renderSheets() {
+    const L = S.layoutSheets(model, { flute: state.flute, only3: state.only3, sheetW: state.sheetIn[1] * IN, sheetH: state.sheetIn[0] * IN }), W = L.sheet.w, H = L.sheet.h;
+    const n5 = L.sheets.filter(q => q.board === 5).length, n3 = L.sheets.length - n5;
+    $('sheetsum').innerHTML = (state.only3
+      ? `<b>Shopping list:</b> ${n3} × 3-ply corrugated sheets, ${L.sheet.label}, plus 1 spare. <b>Doubled parts:</b> deck A, the front seat panel E, beams D1, D2 and both rotor base discs Q are cut twice (marked ·2). The second layer has no glue tabs, so the tabs stay thin enough to fold; on Q it has a bigger centre hole that the motor collar sits in. Glue each pair face to face with PVA spread thinly over the whole surface, waves crossed, then press flat under heavy books overnight. Don't use hot glue for this; it leaves lumps.`
+      : `<b>Shopping list:</b> ${n5} × 5-ply and ${n3} × 3-ply corrugated sheets, ${L.sheet.label}. Buy one spare of each.`)
+      + (L.tooBig.length ? ` <b>Doesn't fit:</b> ${L.tooBig.join(', ')}.` : '');
+    $('sheets').innerHTML = L.sheets.map((sh, i) => {
+      let g = `<svg viewBox="-1 -1 ${W + 2} ${H + 2}" role="img" aria-label="Sheet ${i + 1}, ${sh.board}-ply, parts ${sh.placed.map(q => q.id).join(', ')}">`;
+      g += `<rect class="sheetbg${sh.board === 5 ? ' five' : ''}" x="0" y="0" width="${W}" height="${H}" rx="0.6" vector-effect="non-scaling-stroke" stroke-width="1.5"/>`;
+      // waves: faint lines showing which way the flutes run
+      if (L.along === 'y') for (let x = 2; x < W; x += 2.5) g += `<line class="wave" x1="${x}" y1="0.3" x2="${x}" y2="${H - 0.3}" vector-effect="non-scaling-stroke" stroke-width="0.6"/>`;
+      else for (let y = 2; y < H; y += 2.5) g += `<line class="wave" x1="0.3" y1="${y}" x2="${W - 0.3}" y2="${y}" vector-effect="non-scaling-stroke" stroke-width="0.6"/>`;
+      sh.placed.forEach(pl => {
+        const T = S.sheetTf(pl.shape, pl.rot, pl.flip, pl.x, pl.y), d = pts => 'M' + pts.map(q => { const t = T(q); return t[0].toFixed(2) + ' ' + t[1].toFixed(2); }).join(' L');
+        const w = pl.rot ? pl.shape.h : pl.shape.w, hh = pl.rot ? pl.shape.w : pl.shape.h;
+        g += `<g class="lp" data-part="${pl.id}" aria-pressed="${state.sel === pl.id}"><title>${pl.id} ${pl.name}${pl.flip ? ' (flipped copy)' : ''}</title>`;
+        g += `<path class="pfill" fill-rule="evenodd" d="${pl.shape.paths.filter(pa => pa.kind === 'cut' && pa.closed).map(pa => d(pa.pts) + ' Z').join(' ')}"/>`;
+        pl.shape.paths.forEach(pa => { if (pa.kind === 'cut' || pa.kind === 'fold') g += `<path class="${pa.kind}" vector-effect="non-scaling-stroke" stroke-width="${pa.kind === 'cut' ? 1.2 : 0.8}" d="${d(pa.pts)}${pa.closed ? ' Z' : ''}"/>`; });
+        const fs = Math.max(1.4, Math.min(4.5, Math.min(w, hh) * 0.4));
+        const ring = pl.shape.holes.length > 0;
+        const lx = pl.x + w / 2, ly = ring ? pl.y + Math.min(hh * 0.06 + fs * 0.5, hh / 2) : pl.y + hh / 2;
+        g += `<text x="${lx}" y="${ly}" font-size="${ring ? Math.min(fs, 2.4) : fs}" text-anchor="middle" dominant-baseline="central">${pl.id}${pl.flip ? '⇄' : ''}${/2nd layer/.test(pl.name) ? '·2' : ''}</text></g>`;
+      });
+      g += '</svg>';
+      const ids = sh.placed.map(q => q.id).filter((v, k, a) => a.indexOf(v) === k);
+      return `<div class="sheetcard"><div class="hd"><b>Sheet ${i + 1} · ${sh.board}-ply</b><span>${L.sheet.label} · waves along the ${state.flute} side</span></div>${g}
+        <div class="ids">Cut from this sheet: ${ids.join(', ')}. ⇄ = flipped copy (trace the stencil face down).</div></div>`;
+    }).join('');
+  }
+  // PDFs straight from the page, so the prints always match what is shown here
+  function download(name, r) {
+    const str = r.pdf.bytes(), u8 = new Uint8Array(str.length);
+    for (let i = 0; i < str.length; i++) u8[i] = str.charCodeAt(i);
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([u8], { type: 'application/pdf' })); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    return r.n;
+  }
+  // step-by-step tube drawings, to scale from the current model
+  function renderTubes() {
+    const p = model.p, hw = model.helpers.halfWidth, r = p.tubeD / 2, f1 = v => v.toFixed(1);
+    const R1 = model.ruler.find(q => q.id === 'R1').w, R2 = model.ruler.find(q => q.id === 'R2').w, TL = p.tubeL;
+    const tx = (x, y, s, o) => `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}"${o ? ' ' + o : ''}>${s}</text>`;
+    const svg = (w, h, label, body) => `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}">${body}</svg>`;
+    const card = (n, title, pic, text) => `<div class="tstep"><h3><span>${n}</span>${title}</h3>${pic}<p>${text}</p></div>`;
+    const out = [];
+
+    // 1. what to cut from each tube
+    {
+      const sc = 300 / Math.max(TL, R1 + 1), x0 = 20; let b = '';
+      const bar = (y, segs, name) => {
+        b += tx(x0, y - 7, name, 'class="sm"');
+        let x = x0;
+        segs.forEach(([len, cls, lab], i) => {
+          const w = len * sc;
+          b += `<rect class="${cls}" x="${x.toFixed(1)}" y="${y}" width="${w.toFixed(1)}" height="22" rx="2"/>`;
+          if (lab && w > 60) b += tx(x + w / 2, y + 15, lab, 'text-anchor="middle"');
+          if (i) b += `<line class="cutl" x1="${x.toFixed(1)}" y1="${y - 5}" x2="${x.toFixed(1)}" y2="${y + 27}"/>`;
+          x += w;
+        });
+      };
+      bar(34, [[R1, 'tube', `R1 strut ${f1(R1)} cm`], [Math.max(0, TL - R1), 'spare']], `TUBE 1 · ${f1(TL)} cm`);
+      b += tx(x0 + 300, 72, TL >= R1 ? `${f1(TL - R1)} cm left over` : `${f1(R1 - TL)} cm too short!`, `text-anchor="end" class="${TL >= R1 ? 'sm' : 'red'}"`);
+      bar(106, [[R2, 'tube', `R2 pod ${f1(R2)}`], [R2, 'tube', `R2 pod ${f1(R2)}`], [Math.max(0, TL - 2 * R2), 'spare', `spare ${f1(TL - 2 * R2)}`]], `TUBE 2 · ${f1(TL)} cm`);
+      b += tx(x0, 152, 'red line = cut straight across', 'class="sm"');
+      out.push(card(1, 'Cut the 2 tubes', svg(340, 160, 'Tube 1 is the whole strut; tube 2 gives both pods', b),
+        `<b>First measure your tube:</b> wrap a strip of paper once round it, mark where it meets, and measure that length. Divide by 3.14 to get the outside diameter, and enter it in "Tube OUTSIDE diameter" above. Tubes are often sold by their inside size, so a "2.5 in" tube can be about 6.6 cm outside. Paper guides O and P are sized from this number, so their ends should just meet round the tube. Tube 1 is the strut R1, and it must stay in one piece. Tube 2 gives both pods R2. To mark a straight cut, wrap a strip of paper round the tube, line its edges up and draw along it. Cut with a bread knife or junior hacksaw.${TL < R1 ? ' <b>Your strut is longer than a 21 in tube: lower the rotor span.</b>' : ''}`));
+    }
+
+    // 2. pods: slanted top from template P (side view, nose to the right)
+    {
+      const sc = 140 / R2, pw = p.tubeD * sc, k2 = 2 * p.slant * sc, y0 = 34, yb = y0 + R2 * sc;
+      const xa = 30, xb = 225, ys = y0 + (p.slant + p.podTop - p.strutZ) * sc;
+      let b = tx(xa + pw / 2, 20, 'before', 'text-anchor="middle" class="sm"') + tx(xb + pw / 2, 20, 'after', 'text-anchor="middle" class="sm"');
+      b += `<rect class="tube" x="${xa}" y="${y0}" width="${pw.toFixed(1)}" height="${(yb - y0).toFixed(1)}"/>`;
+      b += `<polygon class="waste" points="${xa},${y0} ${(xa + pw).toFixed(1)},${y0} ${(xa + pw).toFixed(1)},${(y0 + k2).toFixed(1)}"/>`;
+      b += `<line class="cutl" x1="${xa}" y1="${y0}" x2="${(xa + pw).toFixed(1)}" y2="${(y0 + k2).toFixed(1)}"/>`;
+      b += tx(xa + pw + 6, y0 + k2 / 2 + 4, 'cut off', 'class="red"');
+      b += `<polygon class="tube" points="${xb},${y0} ${(xb + pw).toFixed(1)},${(y0 + k2).toFixed(1)} ${(xb + pw).toFixed(1)},${yb.toFixed(1)} ${xb},${yb.toFixed(1)}"/>`;
+      b += `<circle class="hid" cx="${(xb + pw / 2).toFixed(1)}" cy="${ys.toFixed(1)}" r="${(r * sc).toFixed(1)}"/><circle class="hid" cx="${(xb + pw / 2).toFixed(1)}" cy="${ys.toFixed(1)}" r="${(1 * sc).toFixed(1)}"/>`;
+      b += tx(xb - 6, y0 + 10, `back`, 'text-anchor="end" class="sm"') + tx(xb - 6, y0 + 22, `${f1(R2)} cm`, 'text-anchor="end" class="sm"');
+      b += tx(xb + pw + 6, y0 + k2 + 10, `front`, 'class="sm"') + tx(xb + pw + 6, y0 + k2 + 22, `${f1(R2 - 2 * p.slant)} cm`, 'class="sm"');
+      b += tx(xb - 6, ys - 8, 'strut joins', 'text-anchor="end" class="sm"') + tx(xb - 6, ys + 4, 'on the inner', 'text-anchor="end" class="sm"') + tx(xb - 6, ys + 16, 'side (dashed)', 'text-anchor="end" class="sm"');
+      b += tx(330, 20, 'NOSE →', 'text-anchor="end"');
+      out.push(card(2, 'Shape the pods (template P)', svg(340, yb + 14, 'Pod side view: the top is cut on a slant, low side towards the nose', b),
+        `Cut paper P out, cutting its top edge along the curve. Wrap it round one pod piece with the bottom edges level and FRONT towards the nose, then tape it. Draw along the curve and cut: the top now leans ${p.tilt}° towards the audience. Mark the circle where the strut joins and cut the 2 cm wire hole in its middle. For the second pod, flip P over first.`));
+    }
+
+    // 3. why: seen from above, a straight end only touches the pod at one spot
+    {
+      const R = 24, cy = 86; let b = '';
+      [[0, 'straight cut', 'touches one spot'], [170, 'fish-mouth cut', 'hugs the pod']].forEach(([ox, t1, t2], i) => {
+        const cx = ox + 118, x0 = ox + 14;
+        b += tx(ox + 85, 22, t1, 'text-anchor="middle"') + tx(ox + 85, 37, t2, `text-anchor="middle" class="${i ? 'sm' : 'red'}"`);
+        b += `<circle class="tube" cx="${cx}" cy="${cy}" r="${R}"/>` + tx(cx, cy + 4, 'pod', 'text-anchor="middle" class="sm"');
+        if (!i) {
+          b += `<rect class="tube" x="${x0}" y="${cy - R}" width="${cx - R - x0}" height="${2 * R}"/>`;
+          b += `<path class="waste" d="M${cx - R} ${cy - R} L${cx} ${cy - R} A${R} ${R} 0 0 0 ${cx - R} ${cy} A${R} ${R} 0 0 0 ${cx} ${cy + R} L${cx - R} ${cy + R} Z"/>`;
+          b += tx(cx - R - 4, cy + R + 16, 'gaps', 'text-anchor="middle" class="red"');
+        } else {
+          b += `<path class="tube" d="M${x0} ${cy - R} L${cx} ${cy - R} A${R} ${R} 0 0 0 ${cx - R} ${cy} A${R} ${R} 0 0 0 ${cx} ${cy + R} L${x0} ${cy + R} Z"/>`;
+          b += `<path class="glue" d="M${cx} ${cy - R} A${R} ${R} 0 0 0 ${cx - R} ${cy} A${R} ${R} 0 0 0 ${cx} ${cy + R}"/>`;
+          b += tx(cx - R - 4, cy + R + 16, 'glue all along', 'text-anchor="middle" class="sm"');
+        }
+        b += tx(x0 + 30, cy + 4, 'strut', 'text-anchor="middle" class="sm"');
+      });
+      b += tx(170, 148, 'seen from above', 'text-anchor="middle" class="sm"');
+      out.push(card(3, 'Why the strut end needs a fish-mouth', svg(340, 156, 'Seen from above: a straight-cut tube only touches the round pod at one spot; a fish-mouth end wraps round it', b),
+        'A tube cut straight across meets the round pod at just one spot, so it wobbles and the glue snaps off. If you shape the end to the same curve as the pod, it wraps round the pod and the glue holds all along the join. Same idea as two fingers holding a pencil.'));
+    }
+
+    // 4. making it with guide O
+    {
+      const C = 2 * Math.PI * r, W = 300, sc = W / C, x0 = 20, y0 = 44, hg = (r + 2) * sc, dep = s => y0 + r * Math.abs(Math.sin(s / r)) * sc;
+      let curve = '', b = '';
+      for (let i = 0; i <= 80; i++) { const s = C * i / 80; curve += `${i ? 'L' : 'M'}${(x0 + s * sc).toFixed(1)} ${dep(s).toFixed(1)} `; }
+      b += `<rect class="paper" x="${x0}" y="${y0}" width="${W}" height="${hg.toFixed(1)}"/>`;
+      b += `<path class="waste" d="${curve} L${x0 + W} ${y0} L${x0} ${y0} Z"/><path class="cutl" d="${curve}"/>`;
+      ['FRONT', 'TOP', 'BACK', 'BOTTOM', 'FRONT'].forEach((s, i) => {
+        const x = x0 + W * i / 4;
+        b += `<line class="dim" x1="${x}" y1="${y0 - 6}" x2="${x}" y2="${y0}"/>` + tx(x, y0 - 10, s, `text-anchor="${i === 0 ? 'start' : i === 4 ? 'end' : 'middle'}" class="sm"`);
+      });
+      [1, 3].forEach(q => { b += tx(x0 + W * q / 4, y0 + r * sc * 0.42, 'cut off', 'text-anchor="middle" class="red"'); });
+      b += tx(x0 + W / 2, y0 + hg - 6, 'paper guide O, unrolled', 'text-anchor="middle" class="sm"');
+      // the cut end seen from the front: a pointed "fish mouth"
+      const yt = y0 + hg + 34, R = 20, xe = 220;
+      b += tx(x0, yt - 10, 'the cut end, seen from the front:', 'class="sm"');
+      b += `<polygon class="tube" points="70,${yt} ${xe - R},${yt} ${xe},${yt + R} ${xe - R},${yt + 2 * R} 70,${yt + 2 * R}"/>`;
+      b += tx(xe + 8, yt + R - 2, '← points:', 'class="sm"') + tx(xe + 22, yt + R + 11, 'front + back', 'class="sm"') + tx(xe - R - 6, yt + 12, 'dip', 'text-anchor="end" class="sm"');
+      out.push(card(4, 'Cut the fish-mouth (guide O)', svg(340, yt + 2 * R + 10, 'Guide O unrolled, with the wavy cut line; the finished tube end comes to a point at the front and back', b),
+        'Cut paper O out, then cut along the red wavy line and throw the red bits away. Wrap it round one end of the strut, wavy edge at the end, with the FRONT mark facing the nose. Slide it until the FRONT and BACK points are level with the end of the tube, and tape it. Draw along the wavy edge, take the paper off and cut on your line with a craft knife. Do the same at the other end. Hold each end against a pod and trim any bumps.'));
+    }
+
+    // 5. through the body, seen from the front
+    {
+      const span = 2 * (p.rotorY + p.rotorD / 2), sc = 316 / span, xc = 170, yd = 92;
+      const X = y => xc + y * sc, Z = z => yd - z * sc, x = p.tubeFX;
+      const w0 = hw(p, x, 0), wb = hw(p, x, -p.beltZ), wh = hw(p, x, -p.H), ws = hw(p, x, p.strutZ);
+      const zt = p.strutZ + r, zb = p.strutZ - r, ry = p.rotorD / 2 * Math.sin(p.tiltR) * sc + 2;
+      let b = `<polygon class="body" points="${[[-w0, 0], [w0, 0], [wb, -p.beltZ], [wh, -p.H], [-wh, -p.H], [-wb, -p.beltZ]].map(([a, c]) => X(a).toFixed(1) + ',' + Z(c).toFixed(1)).join(' ')}"/>`;
+      b += `<rect class="hid" x="${X(-w0 + p.board).toFixed(1)}" y="${Z(0).toFixed(1)}" width="${(2 * (w0 - p.board) * sc).toFixed(1)}" height="${(p.beamD * sc).toFixed(1)}"/>`;
+      b += tx(xc, Z(-p.beamD) + 32, 'beam D1 (behind)', 'text-anchor="middle" class="sm"');
+      [-1, 1].forEach(sd => {
+        b += `<rect class="tube" x="${Math.min(X(sd * ws), X(sd * p.rotorY)).toFixed(1)}" y="${Z(zt).toFixed(1)}" width="${(Math.abs(p.rotorY - ws) * sc).toFixed(1)}" height="${(p.tubeD * sc).toFixed(1)}"/>`;
+        b += `<rect class="tube" x="${X(sd * p.rotorY - r).toFixed(1)}" y="${Z(p.podTop).toFixed(1)}" width="${(p.tubeD * sc).toFixed(1)}" height="${((p.podTop - p.podBot) * sc).toFixed(1)}"/>`;
+        b += `<ellipse class="rotor" cx="${X(sd * p.rotorY).toFixed(1)}" cy="${(Z(p.podTop) - 4).toFixed(1)}" rx="${(p.rotorD / 2 * sc).toFixed(1)}" ry="${ry.toFixed(1)}"/>`;
+      });
+      b += `<rect class="hid" x="${X(-ws).toFixed(1)}" y="${Z(zt).toFixed(1)}" width="${(2 * ws * sc).toFixed(1)}" height="${(p.tubeD * sc).toFixed(1)}"/>`;
+      b += `<circle cx="${X(-ws + 2).toFixed(1)}" cy="${Z(p.strutZ).toFixed(1)}" r="3.5" fill="#d0342c"/>`;
+      b += tx(X(-ws + 2) + 4, Z(zb) + 12, 'wire hole (underside)', 'class="sm"');
+      b += `<path class="dim" d="M${X(-p.rotorY).toFixed(1)} 18 H${X(p.rotorY).toFixed(1)} M${X(-p.rotorY).toFixed(1)} 13 V23 M${X(p.rotorY).toFixed(1)} 13 V23 M${xc} 14 V22"/>`;
+      b += tx((X(-p.rotorY) + xc) / 2, 13, f1(p.rotorY), 'text-anchor="middle" class="sm"') + tx((X(p.rotorY) + xc) / 2, 13, f1(p.rotorY), 'text-anchor="middle" class="sm"');
+      b += tx(X(-p.rotorY + r), Z(p.podBot) + 16, 'HER RIGHT', 'text-anchor="end" class="sm"') + tx(X(p.rotorY - r), Z(p.podBot) + 16, 'HER LEFT', 'class="sm"');
+      b += tx(xc, Z(-p.H) + 16, 'seen from the front · dashed = inside', 'text-anchor="middle" class="sm"');
+      out.push(card(5, 'Push the strut through the body', svg(340, Z(-p.H) + 22, 'Front view: the strut passes through both upper walls in front of beam D1, with a pod standing on each end', b),
+        `Do this once the upper walls are on. Push the strut through the hole in one C1 wall, in front of beam D1 and out through the other wall. Slide it until each end is ${f1(p.rotorY)} cm from the middle, then turn it so the fish-mouth points face front and back. The wall holes are cut oval to match the sloping wall, with about 1 mm to spare all round: it slides through snugly without forcing, and hot glue fills the gap. Make a 1.5 cm wire hole on the underside of the strut, ${f1(ws - 2)} cm from the middle towards her right (just inside that wall; the strut sits right up against the deck, so the wire comes down the inside of the wall to reach it), feed the motor wires in there and out of both ends, then hot-glue the strut to beam D1 and round both wall holes.`));
+    }
+
+    // 6. glue each pod on and wrap the join
+    {
+      const R = 22, cy = 108, xj = 200; let b = '';
+      b += `<rect class="tube" x="20" y="${cy - R}" width="${xj - 20}" height="${2 * R}"/>`;
+      b += `<rect class="tube" x="${xj}" y="26" width="${2 * R}" height="150"/>`;
+      b += `<path class="wire" d="M24 ${cy} H${xj + R} V22"/>`;
+      b += `<line class="glue" x1="${xj}" y1="${cy - R + 3}" x2="${xj}" y2="${cy + R - 3}"/>`;
+      [35, -35].forEach(a => { b += `<rect class="tape" x="${xj - 46}" y="${cy - 7}" width="92" height="14" transform="rotate(${a} ${xj} ${cy})"/>`; });
+      b += `<rect class="hid" x="${xj - 58}" y="${cy - R - 16}" width="${2 * R + 72}" height="${2 * R + 32}" rx="6"/>`;
+      const call = (n, x, y) => `<circle cx="${x}" cy="${y}" r="9" fill="var(--taxi)"/>` + tx(x, y + 4, n, 'text-anchor="middle" style="font-weight:700;fill:var(--taxi-ink)"');
+      b += call(1, xj - 14, cy + R + 30) + tx(xj - 28, cy + R + 34, 'hot glue all round', 'text-anchor="end" class="sm"');
+      b += call(2, xj + 2 * R + 32, cy - 26) + tx(xj + 2 * R + 32, cy - 40, 'tape X', 'text-anchor="middle" class="sm"');
+      b += call(3, xj - 70, cy - R - 26) + tx(xj - 84, cy - R - 22, 'paper strips', 'text-anchor="end" class="sm"');
+      b += tx(60, cy + 4, 'strut', 'class="sm"') + tx(xj + 2 * R + 6, 170, 'pod', 'class="sm"') + tx(24, cy + R + 16, 'wire (inside)', 'class="red" style="font-weight:400"');
+      out.push(card(6, 'Glue the pods on', svg(340, 190, 'Close-up of the join: hot glue, masking tape in an X, then paper strips over it', b),
+        `Push the wire into the pod through its wire hole and out of the top. Stand the pod upright with the low side of its top towards the nose, press the fish-mouth into the marked circle and hot-glue all round. Then wrap masking tape across the join in an X, and 2 layers of paper strips brushed with PVA over that. Leave it to dry overnight. Check from the front that both pods stand straight and their tops are level. For extra stiffness, push a 1 cm dowel or two bamboo skewers through the strut.`));
+    }
+    $('tubes').innerHTML = out.join('');
+  }
+
+  // ---------- navigation shared by the 3D viewers ----------
+  // drag turns; middle-, right- or Shift-drag pans; wheel or pinch zooms. On a touchpad two-finger scroll pans and pinch zooms
+  // (the browser reports a touchpad pinch as a wheel event with ctrlKey). On a phone two fingers pan and pinch together.
+  function panBy(camera, target, dx, dy, dist, h) {
+    camera.updateMatrixWorld();
+    const k = 2 * dist * Math.tan(camera.fov * Math.PI / 360) / (h || 1), m = camera.matrixWorld.elements;
+    target.x += (-dx * m[0] + dy * m[4]) * k; target.y += (-dx * m[1] + dy * m[5]) * k; target.z += (-dx * m[2] + dy * m[6]) * k;
+  }
+  function wheelNav(e, cam, camera, h, lo, hi) {
+    e.preventDefault();
+    const pad = !e.ctrlKey && e.deltaMode === 0 && (e.deltaX !== 0 || Math.abs(e.deltaY) < 40);
+    if (pad) { panBy(camera, cam.target, -e.deltaX, -e.deltaY, cam.r, h); return; }
+    cam.r = Math.max(lo, Math.min(hi, cam.r * (e.ctrlKey ? Math.exp(e.deltaY * 0.01) : e.deltaY > 0 ? 1.1 : 0.9)));
+  }
+  function viewControls(cv, cam, camera, draw, pick, lo, hi) {
+    const ptrs = new Map(); let pinch = 0, moved = 0, pan = false;
+    const mid = () => { const v = [...ptrs.values()]; return { x: (v[0].x + v[1].x) / 2, y: (v[0].y + v[1].y) / 2 }; };
+    cv.addEventListener('contextmenu', e => e.preventDefault());
+    cv.addEventListener('pointerdown', e => {
+      if (e.button === 1) e.preventDefault();
+      try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+      ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); moved = 0; pinch = 0; pan = e.button === 1 || e.button === 2 || e.shiftKey;
+    });
+    cv.addEventListener('pointermove', e => {
+      const q = ptrs.get(e.pointerId); if (!q) return;
+      const dx = e.clientX - q.x, dy = e.clientY - q.y, m0 = ptrs.size === 2 ? mid() : null;
+      moved += Math.abs(dx) + Math.abs(dy); q.x = e.clientX; q.y = e.clientY;
+      if (ptrs.size === 1) {
+        if (pan) panBy(camera, cam.target, dx, dy, cam.r, cv.clientHeight);
+        else { cam.th -= dx * 0.01; cam.ph = Math.max(-1.3, Math.min(1.3, cam.ph + dy * 0.01)); }
+      } else if (ptrs.size === 2) {
+        const [a, b] = [...ptrs.values()], d = Math.hypot(a.x - b.x, a.y - b.y), m1 = mid();
+        if (pinch) cam.r = Math.max(lo, Math.min(hi, cam.r * pinch / d)); pinch = d;
+        panBy(camera, cam.target, m1.x - m0.x, m1.y - m0.y, cam.r, cv.clientHeight);
+      }
+      draw();
+    });
+    const up = e => { ptrs.delete(e.pointerId); pinch = 0; };
+    cv.addEventListener('pointerup', e => { if (ptrs.size === 1 && moved < 5 && !pan) pick(e); up(e); });
+    cv.addEventListener('pointercancel', up);
+    cv.addEventListener('wheel', e => { wheelNav(e, cam, camera, cv.clientHeight, lo, hi); draw(); }, { passive: false });
+  }
+
+  // ---------- one headlight in 3D, layer by layer (units cm; x towards the back, y up, z out of the wall) ----------
+  const LV = (() => {
+    const cv = $('lcv'), wrap = $('lampViewer'), labWrap = $('llabels');
+    const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+    const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(34, 4 / 3, 0.1, 500);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x445544, 0.8));
+    const sun = new THREE.DirectionalLight(0xffffff, 0.7); sun.position.set(10, 14, 18); scene.add(sun);
+    const back = new THREE.DirectionalLight(0xffffff, 0.4); back.position.set(-8, 6, -16); scene.add(back);
+    const glow = new THREE.PointLight(0xfff1c8, 0, 9); scene.add(glow);
+    const root = new THREE.Group(); scene.add(root);
+    const cam = { th: 0.9, ph: 0.35, r: 34, target: new THREE.Vector3(0, 0, -2.4) };
+    const st = { step: 0, ex: 0, goal: 0, cut: false, on: true, sel: null };
+    // each 3D piece -> its stencil / ruler id, and the guide card below that shows how to make it
+    const ID_OF = { wall: 'C1', paint: 'C1', deck: 'A', lens: 'V', W: 'W', X: 'X', led: 'led', trim: 'U', hood: 'R7' };
+    const CARD_OF = { wall: 2, paint: 2, deck: 1, lens: 3, W: 4, X: 5, led: 5, trim: 6, hood: 6 };
+    const STEP_OF = { wall: 1, paint: 1, deck: 1, lens: 2, W: 3, X: 4, led: 4, trim: 6, hood: 6 };
+    const DZ = { wall: 0, paint: 0, deck: 0, trim: 3, hood: 3, lens: -2, W: -4.5, X: -8, led: -8 };
+    const VIEW = [[0.9, 0.35], [0.35, 0.2], [Math.PI - 0.7, 0.35], [Math.PI - 0.7, 0.35], [Math.PI - 0.8, 0.3], [Math.PI - 0.7, 0.35], [0.35, 0.25]];
+    const STEPS = [
+      ['The finished headlight', 'All the layers in place. Drag to turn it. "Pull apart" separates the layers, "Cut in half" shows the inside, and the numbers walk you through the build.'],
+      ['Cut the window in C1', 'C1 is the upper front wall of the body itself (one each side), not an extra piece. Cut the egg-shaped window out of it, near the nose: the window is printed on the C1 stencil. This shows just a small square of that wall; the black is the painted nose patch and the deck is on top.'],
+      ['Glue lens V behind it', 'Turn the wall over and work from inside the body. Glue the white lens over the window with small dots of hot glue round its 6 mm margin.'],
+      ['Glue box side W round it', 'Bend strip W into the egg shape, white side in. Fold its top tabs out and glue them to the wall all round the window, on top of the lens margin. It stands 3 cm into the body; its back tabs fold in.'],
+      ['LED into back panel X', 'Push the 10 mm LED through the centre hole of X from behind, so the dome is on the white side, and hot-glue it. Resistor on the long (+) leg, tape over both legs.'],
+      ['Close the box', 'Glue X onto the back tabs of W. The box is closed: the LED shines into the white box and the whole lens glows evenly. Wires run under the right deck edge to the battery.'],
+      ['Trim and hood outside', 'On the outside, glue silver trim U round the window (pointed end up and towards the back), then bend hood R7 into an arch over its top edge like an eyelid.']
+    ];
+    let parts = {}, labels = [], raf = 0;
+    const mats = [];
+    const mat = (o) => { const m = new THREE.MeshStandardMaterial(Object.assign({ roughness: 0.6, side: THREE.DoubleSide }, o)); m.userData.e0 = m.emissive.getHex(); m.userData.ei = m.emissiveIntensity; mats.push(m); return m; };
+    const mesh = (g, m, key) => { const o = new THREE.Mesh(g, m); o.userData.key = key; return o; };
+    const v2 = pts => pts.map(([u, v]) => new THREE.Vector2(u, v));
+
+    function build(p) {
+      root.clear(); parts = {}; labels = []; mats.length = 0; labWrap.innerHTML = '';
+      const egg = g => p ? model.helpers.lampLocal(p, g, 64) : [];
+      const put = (key, obj) => { (parts[key] = parts[key] || new THREE.Group()).add(obj); parts[key].userData.key = key; root.add(parts[key]); };
+      // wall C1 around the headlight, painted black outside, with the deck above
+      const sh = new THREE.Shape(v2([[-7.5, -4], [7.5, -4], [7.5, 4], [-7.5, 4]])); sh.holes.push(new THREE.Path(v2(egg(0))));
+      const wg = new THREE.ExtrudeGeometry(sh, { depth: 0.4, bevelEnabled: false, curveSegments: 1 }); wg.translate(0, 0, -0.4);
+      put('wall', mesh(wg, mat({ color: 0xc49a6c }), 'wall'));
+      const pg = new THREE.ShapeGeometry(sh); pg.translate(0, 0, 0.005);
+      put('paint', mesh(pg, mat({ color: 0x151515, roughness: 0.45 }), 'paint'));
+      const dk = new THREE.Mesh(new THREE.BoxGeometry(15, 0.4, 7), mat({ color: 0xf5c518 })); dk.position.set(0, 4.2, -3.1); put('deck', dk);
+      // lens V just behind the wall
+      const lg = new THREE.ExtrudeGeometry(new THREE.Shape(v2(egg(0.6))), { depth: 0.05, bevelEnabled: false }); lg.translate(0, 0, -0.46);
+      put('lens', mesh(lg, mat({ color: 0xf4f8ff, transparent: true, opacity: 0.88, emissive: 0x000000 }), 'lens'));
+      // light box side W: a 3 cm card wall round the egg, front tabs out, back tabs in
+      const ring = egg(0.3), n = ring.length, pos = [], idx = [];
+      ring.forEach(([u, v]) => pos.push(u, v, -0.46, u, v, -3.46));
+      for (let i = 0; i < n; i++) { const a = 2 * i, b = 2 * ((i + 1) % n); idx.push(a, b, a + 1, b, b + 1, a + 1); }
+      const tabs = (z, dir) => { for (let i = 0; i < n; i += 4) { const A = ring[i], B = ring[(i + 2) % n], k = pos.length / 3;
+        const nA = Math.hypot(...A), nB = Math.hypot(...B);
+        pos.push(A[0], A[1], z, B[0], B[1], z, B[0] + dir * B[0] / nB * 0.9, B[1] + dir * B[1] / nB * 0.9, z, A[0] + dir * A[0] / nA * 0.9, A[1] + dir * A[1] / nA * 0.9, z);
+        idx.push(k, k + 1, k + 2, k, k + 2, k + 3); } };
+      tabs(-0.47, 1); tabs(-3.44, -1);
+      const wgeo = new THREE.BufferGeometry(); wgeo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); wgeo.setIndex(idx); wgeo.computeVertexNormals();
+      put('W', mesh(wgeo, mat({ color: 0xf3efe4 }), 'W'));
+      // box back X with the LED hole
+      const xs = new THREE.Shape(v2(ring)); const hole = new THREE.Path(); hole.absarc(0, 0, 0.5, 0, Math.PI * 2, true); xs.holes.push(hole);
+      const xg = new THREE.ExtrudeGeometry(xs, { depth: 0.05, bevelEnabled: false }); xg.translate(0, 0, -3.51);
+      put('X', mesh(xg, mat({ color: 0xf3efe4 }), 'X'));
+      // LED: dome inside the box, flange behind X, legs, resistor on the long leg, wires
+      const led = new THREE.Group(), lm = mat({ color: 0xeaf4ff, transparent: true, opacity: 0.9, emissive: 0x000000 });
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.9, 24), lm); body.rotation.x = Math.PI / 2; body.position.z = -3.05; led.add(body);
+      const dome = new THREE.Mesh(new THREE.SphereGeometry(0.5, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), lm); dome.rotation.x = Math.PI / 2; dome.position.z = -2.6; led.add(dome);
+      const fl = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.58, 0.1, 24), lm); fl.rotation.x = Math.PI / 2; fl.position.z = -3.58; led.add(fl);
+      const legM = mat({ color: 0xaab0b8, metalness: 0.6 });
+      [[0.14, 2.1], [-0.14, 1.8]].forEach(([x, L]) => { const g = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, L, 6), legM); g.rotation.x = Math.PI / 2; g.position.set(x, 0, -3.62 - L / 2); led.add(g); });
+      const res = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.7, 12), mat({ color: 0xd9c8a0 })); res.rotation.x = Math.PI / 2; res.position.set(0.14, 0, -4.7); led.add(res);
+      [[0.14, -5.72, 0xd0342c, [4.5, -2.4, -7.2]], [-0.14, -5.42, 0x222222, [4.2, -2.9, -7]]].forEach(([x, z, c, end]) => {
+        const cu = new THREE.CatmullRomCurve3([new THREE.Vector3(x, 0, z), new THREE.Vector3(x + 0.6, -0.4, z - 0.9), new THREE.Vector3(...end)]);
+        led.add(new THREE.Mesh(new THREE.TubeGeometry(cu, 24, 0.07, 6, false), mat({ color: c })));
+      });
+      put('led', led);
+      // trim U outside, hood R7 over its top half
+      const ts = new THREE.Shape(v2(egg(0.7))); ts.holes.push(new THREE.Path(v2(egg(-0.1))));
+      const tg = new THREE.ExtrudeGeometry(ts, { depth: 0.06, bevelEnabled: false }); tg.translate(0, 0, 0.01);
+      put('trim', mesh(tg, mat({ color: 0xb9c2cd, metalness: 0.45, roughness: 0.3 }), 'trim'));
+      const eo = egg(0.7); let s0 = 0; while (!(eo[s0][1] > 0 && eo[(s0 + 63) % 64][1] <= 0)) s0++;
+      const top = []; for (let k = 0; k < 64 && eo[(s0 + k) % 64][1] > 0; k++) top.push(eo[(s0 + k) % 64]);
+      const hp = [], hi = [];
+      top.forEach(([u, v]) => hp.push(u, v, 0.07, u * 1.02, v - 0.25, 2.07));
+      for (let k = 0; k < top.length - 1; k++) { const a = 2 * k; hi.push(a, a + 2, a + 1, a + 2, a + 3, a + 1); }
+      const hg = new THREE.BufferGeometry(); hg.setAttribute('position', new THREE.Float32BufferAttribute(hp, 3)); hg.setIndex(hi); hg.computeVertexNormals();
+      put('hood', mesh(hg, mat({ color: 0xf5c518 }), 'hood'));
+      // labels
+      const bot = eo.reduce((a, q) => q[1] < a[1] ? q : a), lft = ring.reduce((a, q) => q[0] < a[0] ? q : a), tp = eo.reduce((a, q) => q[1] > a[1] ? q : a);
+      [['wall', 'C1 upper front wall', [-4.6, -3.1, 0.1]], ['wall', '← nose', [-7.9, 0.6, 0.1]], ['deck', 'deck', [5.6, 4.5, -3]], ['lens', 'V lens', [-1.6, -1.3, -0.5]],
+       ['W', 'W box side', [lft[0], lft[1] - 0.6, -2]], ['X', 'X box back', [2.2, 1.6, -3.5]], ['led', 'LED', [0, 0, -2.4]], ['led', 'to battery', [4.6, -2.7, -7.2]],
+       ['trim', 'U trim', [bot[0], bot[1] - 0.2, 0.1]], ['hood', 'R7 hood', [tp[0], tp[1] + 0.4, 1.6]]].forEach(([key, t, at]) => {
+        const el = document.createElement('div'); el.className = 'llab'; el.textContent = t; labWrap.appendChild(el);
+        labels.push({ key, el, at: new THREE.Vector3(...at) });
+      });
+      apply(); draw();
+    }
+
+    function apply() {
+      Object.entries(parts).forEach(([k, g]) => {
+        g.visible = st.step === 0 || STEP_OF[k] <= st.step;
+        g.position.z = DZ[k] * st.ex + (st.step === 4 && (k === 'X' || k === 'led') ? -3 : 0);
+        const hl = st.sel ? ID_OF[k] === ID_OF[st.sel] : st.step > 0 && (STEP_OF[k] === st.step || (st.step === 5 && (k === 'X' || k === 'led' || k === 'W')));
+        g.traverse(o => { if (!o.material) return; const m = o.material, lit = st.on && (k === 'lens' || k === 'led') && (st.step === 0 || st.step >= 5);
+          m.emissive.setHex(hl ? 0x8a3300 : lit ? 0xfff0c0 : m.userData.e0); m.emissiveIntensity = lit && !hl ? 0.9 : 1; });
+      });
+      glow.intensity = st.on && (st.step === 0 || st.step >= 5) ? 1.4 : 0;
+      glow.position.set(0, 0, -2.2 + (parts.led ? parts.led.position.z : 0));
+      renderer.clippingPlanes = st.cut ? [new THREE.Plane(new THREE.Vector3(-1, 0, 0), 0)] : [];
+    }
+
+    function draw() {
+      const w = wrap.clientWidth, hgt = wrap.clientHeight;
+      if (!w || !hgt) return;
+      renderer.setSize(w, hgt, false); camera.aspect = w / hgt; camera.updateProjectionMatrix();
+      const c = Math.cos(cam.ph);
+      camera.position.set(cam.target.x + cam.r * Math.sin(cam.th) * c, cam.target.y + cam.r * Math.sin(cam.ph), cam.target.z + cam.r * Math.cos(cam.th) * c);
+      camera.lookAt(cam.target);
+      renderer.render(scene, camera);
+      labels.forEach(L => {
+        const g = parts[L.key], show = g && g.visible && !(st.cut && L.at.x > 0.2 && L.key !== 'deck' && L.key !== 'X');
+        if (!show) { L.el.style.display = 'none'; return; }
+        const v = L.at.clone().add(g.position).project(camera);
+        L.el.style.display = v.z < 1 ? '' : 'none';
+        L.el.style.left = ((v.x + 1) / 2 * w) + 'px'; L.el.style.top = ((1 - v.y) / 2 * hgt) + 'px';
+        L.el.classList.toggle('on', st.sel ? ID_OF[L.key] === ID_OF[st.sel] : st.step > 0 && (STEP_OF[L.key] === st.step || (st.step === 5 && ['X', 'led', 'W'].includes(L.key))));
+      });
+    }
+    function tick() {
+      const d = st.goal - st.ex;
+      if (Math.abs(d) > 0.003) { st.ex += d * 0.16; raf = requestAnimationFrame(tick); } else { st.ex = st.goal; raf = 0; }
+      apply(); draw();
+    }
+    const go = () => { if (!raf) raf = requestAnimationFrame(tick); };
+    function setStep(i) {
+      st.step = i; [cam.th, cam.ph] = VIEW[i]; cam.target.set(0, 0, -2.4);
+      if (st.cut) { cam.th = Math.PI / 2; cam.ph = 0.12; cam.r = 26; }
+      document.querySelectorAll('[data-ls]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.ls === i)));
+      $('lampStepNo').textContent = i ? `Step ${i} of 6` : 'All together';
+      $('lampStepTitle').textContent = STEPS[i][0]; $('lampStepText').textContent = STEPS[i][1];
+      apply(); draw();
+    }
+    document.querySelectorAll('[data-ls]').forEach(b => b.addEventListener('click', () => setStep(+b.dataset.ls)));
+    // side-on views so the layers behind the wall can be seen
+    const sideView = () => { if (st.cut) { cam.th = Math.PI / 2; cam.ph = 0.12; cam.r = 26; } else if (st.goal) { cam.th = 1.25; cam.ph = 0.3; cam.r = 36; } else { [cam.th, cam.ph] = VIEW[st.step]; cam.r = 34; } };
+    $('lExplode').addEventListener('click', e => { st.goal = st.goal ? 0 : 1; e.currentTarget.setAttribute('aria-pressed', String(!!st.goal)); sideView(); go(); });
+    $('lCut').addEventListener('click', e => { st.cut = !st.cut; e.currentTarget.setAttribute('aria-pressed', String(st.cut)); sideView(); apply(); draw(); });
+    $('lOn').addEventListener('click', e => { st.on = !st.on; e.currentTarget.setAttribute('aria-pressed', String(st.on)); apply(); draw(); });
+    function info(key) {
+      const id = ID_OF[key];
+      if (id === 'led') return { tag: 'LED', name: 'LED + 100 Ω resistor', ds: 'A 10 mm white LED pushed through back X, resistor on the long (+) leg. In the "You need" list under Motors and wiring.', go: 'Show in wiring' };
+      const pt = model.parts.find(q => q.id === id), r = model.ruler.find(q => q.id === id);
+      if (pt) return { tag: id, name: pt.name, ds: `Stencil ${id} · cut ${pt.cut} · ${pt.mat}`, go: 'Show stencil' };
+      if (r) return { tag: id, name: r.name, ds: `Ruler cut, no stencil · ${r.size}`, go: 'Show in ruler cuts' };
+      return null;
+    }
+    function select(key) {
+      st.sel = key && st.sel !== key ? key : null;
+      const el = $('lpick'), inf = st.sel && info(st.sel);
+      if (!inf) el.hidden = true;
+      else {
+        el.innerHTML = `<span class="tg">${inf.tag}</span><b>${inf.name}</b><span class="acts"><button class="go" data-lgo="1">${inf.go}</button><button data-lguide="1">Guide step ${CARD_OF[st.sel]}</button><button data-lclear="1" aria-label="Clear selection">✕</button></span><span class="ds">${inf.ds}</span>`;
+        el.hidden = false;
+      }
+      apply(); draw();
+    }
+    $('lpick').addEventListener('click', e => {
+      if (e.target.closest('[data-lclear]')) { select(null); return; }
+      const flash = c => { if (!c) return; c.scrollIntoView({ block: 'center', behavior: 'smooth' }); c.classList.remove('flash'); void c.offsetWidth; c.classList.add('flash'); };
+      if (e.target.closest('[data-lguide]')) { flash(document.querySelectorAll('#lamps .tstep')[CARD_OF[st.sel] - 1]); return; }
+      if (!e.target.closest('[data-lgo]')) return;
+      const id = ID_OF[st.sel];
+      if (id === 'led') { flash(document.querySelector('.wiring')); return; }
+      if (model.parts.some(q => q.id === id)) { openBig(id); return; }
+      flash(document.querySelector(`tr[data-part="${id}"]`));
+    });
+    const ray = new THREE.Raycaster();
+    function pick(e) {
+      const rc = cv.getBoundingClientRect();
+      ray.setFromCamera(new THREE.Vector2((e.clientX - rc.left) / rc.width * 2 - 1, -(e.clientY - rc.top) / rc.height * 2 + 1), camera);
+      const hits = ray.intersectObjects(Object.values(parts).filter(g => g.visible), true)
+        .filter(h => !st.cut || h.point.x <= 0.01);   // ignore the half that is cut away
+      let o = hits[0] && hits[0].object; while (o && !o.userData.key) o = o.parent;
+      select(o ? o.userData.key : null);
+    }
+
+    viewControls(cv, cam, camera, draw, pick, 10, 80);
+    new ResizeObserver(draw).observe(wrap);
+    setStep(0);
+    // from the big model or a stencil: open this viewer with that piece picked
+    const KEY_FOR = { C1: 'wall', V: 'lens', W: 'W', X: 'X', U: 'trim', R7: 'hood' };
+    const show = id => { const k = KEY_FOR[id]; if (!k) return; wrap.scrollIntoView({ block: 'center', behavior: 'smooth' }); st.sel = null; select(k); };
+    return { build, show, has: id => id in KEY_FOR && id !== 'C1' };
+  })();
+
+  // ---------- one rotor head in 3D, layer by layer (units cm; y up along the motor shaft, origin = top of the pod tube) ----------
+  const RV = (() => {
+    const cv = $('rcv'), wrap = $('rotorViewer'), labWrap = $('rlabels');
+    const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+    const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(34, 4 / 3, 0.1, 800);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x445544, 0.85));
+    const sun = new THREE.DirectionalLight(0xffffff, 0.7); sun.position.set(14, 20, 18); scene.add(sun);
+    const under = new THREE.DirectionalLight(0xffffff, 0.45); under.position.set(-10, -18, 8); scene.add(under);
+    const root = new THREE.Group(); scene.add(root);
+    const cam = { th: 0.7, ph: 0.45, r: 58, target: new THREE.Vector3(0, -1, 0) };
+    const st = { step: 0, ex: 0, goal: 0, cut: false, tube: false, spin: false, sel: null };
+    const ID_OF = { motor: 'motor', R9: 'R9', Q1: 'Q', Q2: 'Q', pod: 'R2', Y: 'Y', R3: 'R3', I: 'I', cover: 'I', hub: 'hub', J: 'J' };
+    const STEP_OF = { motor: 1, R9: 1, Q1: 2, Q2: 2, pod: 4, Y: 4, R3: 5, I: 5, hub: 6, J: 6, cover: 6 };
+    const HL = { 1: ['motor', 'R9'], 2: ['Q1', 'Q2'], 3: ['motor', 'R9', 'Q2'], 4: ['pod', 'Y'], 5: ['R3', 'I'], 6: ['hub', 'J', 'cover'] };
+    const DY = { pod: -23, Y: -17, motor: -12, R9: -7.5, Q2: -3, Q1: 0, R3: 4, I: 8.5, hub: 12, J: 12, cover: 16 };
+    const INSIDE = ['motor', 'R9', 'Q2', 'Y', 'pod'];   // hidden under the disc: no labels until pulled apart or cut
+    const VIEW = [[0.7, 0.45], [0.7, 0.15], [0.7, -0.55], [0.7, -0.5], [0.7, -0.25], [0.7, 0.5], [0.7, 0.6]];
+    const STEPS = [
+      ['The finished rotor', 'One rotor head, upright (on the costume it leans 20° towards the audience). "Pull apart" separates the layers, "Cut in half" shows the motor sitting in its socket, "Tube" adds the pod tube, and the numbers walk you through the build.'],
+      ['Wrap the motor in collar R9', 'Wrap the 2.5 x 25 cm thin-card strip tightly round the motor body with glue between the turns, front face of the motor level with one edge. About 3 turns: keep wrapping until it just pushes into the motor-shaped socket in Q.'],
+      ['Glue the two layers of Q', 'Q is two 3-ply discs glued face to face with Fevicol, waves crossed. The bottom one (layer 2) has a motor-shaped socket, round with two flat sides; the top one has only a small hole for the shaft. Together they make a pocket 4 mm deep for the motor.'],
+      ['Push the motor into the socket', 'From underneath, push the collared motor into the socket until its face touches the top layer and the shaft comes up through the small hole. Spin the shaft by hand to check it stands square, then run hot glue round the collar where it meets Q.'],
+      ['Collar Y on the pod tube', 'Wrap collar Y round the slanted top of the pod tube, curved edge flush, and fold its tabs out flat. Glue Q onto the tube edge and the tabs, on its oval mark, FRONT towards the nose. The motor hangs inside the tube and its wires run down to the strut.'],
+      ['Rim R3 and lip ring I', 'Wrap rim strip R3 round the edge of Q: bottom tabs glued under Q, top tabs folded in. Glue lip ring I onto the top tabs.'],
+      ['Hub, blades and cover', 'Glue the four card blades J to a bottle cap with a slight twist and press the cap, open side up, onto the shaft. Tape the clear disc over the top so little fingers stay out.']
+    ];
+    let parts = {}, labels = [], raf = 0;
+    const mat = o => { const m = new THREE.MeshStandardMaterial(Object.assign({ roughness: 0.6, side: THREE.DoubleSide }, o)); m.userData.e0 = m.emissive.getHex(); return m; };
+    const lathe = (ri, ro, y0, y1, n) => new THREE.LatheGeometry([[ri, y0], [ro, y0], [ro, y1], [ri, y1], [ri, y0]].map(([x, y]) => new THREE.Vector2(x, y)), n || 64);
+    const tabRing = (ri, ro, y, n, sx) => { const g = new THREE.Group(); for (let k = 0; k < n; k++) { const m = new THREE.Mesh(new THREE.RingGeometry(ri, ro, 4, 1, k * 2 * Math.PI / n, 0.7 * 2 * Math.PI / n)); m.rotation.x = -Math.PI / 2; m.position.y = y; m.scale.x = sx || 1; g.add(m); } return g; };
+    const paint = (g, m) => { g.traverse(o => { if (o.isMesh) o.material = m; }); return g; };
+    // a round outline with two flat sides (the type-130 motor's shape), and a flat slab of it between heights y0 and y1
+    const flat = (rad, half, n) => { const o = []; n = n || 64; for (let i = 0; i < n; i++) { const a = 2 * Math.PI * i / n; o.push(new THREE.Vector2(rad * Math.cos(a), Math.max(-half, Math.min(half, rad * Math.sin(a))))); } return o; };
+    const slab = (outer, hole, y0, y1) => { const sh = new THREE.Shape(outer); if (hole) sh.holes.push(new THREE.Path(hole.slice().reverse()));
+      const g = new THREE.ExtrudeGeometry(sh, { depth: y1 - y0, bevelEnabled: false, curveSegments: 64 }); g.rotateX(-Math.PI / 2); g.translate(0, y0, 0); return g; };
+
+    function build(p) {
+      root.clear(); parts = {}; labels = []; labWrap.innerHTML = '';
+      const put = (key, obj) => { (parts[key] = parts[key] || new THREE.Group()).add(obj); parts[key].userData.key = key; root.add(parts[key]); };
+      const b = p.board, R = p.rotorD / 2, rr = R - p.ringW, r = p.tubeD / 2, t = p.tiltR, top = 2 * b + p.rimH;
+      const KR = 0xc49a6c, KR2 = 0xb08458, YEL = 0xf5c518, CARD = 0xd9c7a3;
+      // disc Q: layer 2 underneath with the motor socket, top layer with the shaft hole
+      put('Q2', new THREE.Mesh(slab(flat(R, R, 128), flat(p.sockR, p.sockF), 0, b), mat({ color: KR2 })));
+      put('Q1', new THREE.Mesh(lathe(0.35, R, b, 2 * b), mat({ color: KR })));
+      // motor: can, end cap, bearing boss into the shaft hole, shaft, terminals and wires down the tube
+      const mo = new THREE.Group(), metal = mat({ color: 0xb8bec6, metalness: 0.6, roughness: 0.3 });
+      // type-130 hobby motor: 20 mm round can with flats 15 mm apart, red plastic end cap with the two terminals
+      mo.add(new THREE.Mesh(slab(flat(1, 0.75), null, b - 2.5, b), metal));
+      mo.add(new THREE.Mesh(slab(flat(0.97, 0.72), null, b - 2.95, b - 2.5), mat({ color: 0xd8392b })));
+      const boss = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.2, 16), metal); boss.position.y = b + 0.1; mo.add(boss);
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, b + 1.6, 10), metal); shaft.position.y = b + (b + 1.6) / 2; mo.add(shaft);
+      [[0.45, 0xd0342c], [-0.45, 0x222222]].forEach(([x, c]) => {
+        const tm = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.35, 0.3), metal); tm.position.set(x, b - 3.12, 0); mo.add(tm);
+        const cu = new THREE.CatmullRomCurve3([new THREE.Vector3(x, b - 3.25, 0), new THREE.Vector3(x + 0.6, b - 5, 0.3), new THREE.Vector3(x + 2.6, -10, 0.4)]);
+        mo.add(new THREE.Mesh(new THREE.TubeGeometry(cu, 24, 0.09, 6, false), mat({ color: c })));
+      });
+      put('motor', mo);
+      // collar R9: thin card wound round the motor, front edge level with the motor face, fills the socket
+      put('R9', new THREE.Mesh(slab(flat(p.sockR - 0.03, p.sockF - 0.03), flat(1.0, 0.75), b - 2.5, b), mat({ color: CARD })));
+      // pod tube (cut on the slant so its top lies flat under Q) and collar Y round it, tabs out flat under Q
+      const slant = (g, y0) => { const a = g.attributes.position; for (let i = 0; i < a.count; i++) a.setY(i, a.getY(i) + y0 - a.getX(i) * Math.tan(t)); g.computeVertexNormals(); return g; };
+      const tube = new THREE.Mesh(slant(new THREE.CylinderGeometry(r, r, 8, 48, 1, true), -4), mat({ color: 0xa77a4c, transparent: true, opacity: 0.55, depthWrite: false })); tube.rotation.z = t;
+      const tin = new THREE.Mesh(slant(new THREE.CylinderGeometry(r - 0.2, r - 0.2, 8, 48, 1, true), -4), mat({ color: 0x8a6440, transparent: true, opacity: 0.55, depthWrite: false })); tin.rotation.z = t;
+      put('pod', tube); put('pod', tin);
+      const yb = new THREE.Mesh(slant(new THREE.CylinderGeometry(r + 0.06, r + 0.06, 2.5, 48, 1, true), -1.25), mat({ color: CARD })); yb.rotation.z = t; put('Y', yb);
+      put('Y', paint(tabRing(r, r + 1, -0.02, 18, 1 / Math.cos(t)), mat({ color: CARD })));   // tabs follow the oval where the slanted tube meets Q
+      // rim R3 round the edge of Q, its bottom tabs under Q and top tabs folded in; lip ring I on top
+      put('R3', new THREE.Mesh(lathe(R, R + 0.4, -0.03, top), mat({ color: YEL })));
+      put('R3', paint(tabRing(R - 1.5, R, -0.04, 28), mat({ color: YEL })));
+      put('R3', paint(tabRing(R - 1.5, R, top - 0.02, 28), mat({ color: YEL })));
+      put('I', new THREE.Mesh(lathe(rr, R + 0.4, top, top + 0.08), mat({ color: YEL })));
+      put('cover', new THREE.Mesh(new THREE.CircleGeometry(R + 0.4, 64), mat({ color: 0xdff2ff, transparent: true, opacity: 0.2, roughness: 0.05, depthWrite: false })));
+      parts.cover.children[0].rotation.x = -Math.PI / 2; parts.cover.children[0].position.y = top + 0.12;
+      // bottle-cap hub, open side up, pressed on the shaft; four card blades with a slight twist
+      const cup = [[0, 0], [1.5, 0], [1.5, 1.2], [1.38, 1.2], [1.38, 0.12], [0, 0.12]].map(([x, y]) => new THREE.Vector2(x, y));
+      const hub = new THREE.Mesh(new THREE.LatheGeometry(cup, 32), mat({ color: 0x3b82c4 })); hub.position.y = 2 * b + 0.5; put('hub', hub);
+      const L = rr - 2.3;
+      for (let k = 0; k < 4; k++) {
+        const bl = new THREE.Mesh(new THREE.BoxGeometry(L, 0.12, 2.6), mat({ color: 0x2a2a2a })), a = k * Math.PI / 2, d = 1.4 + L / 2;
+        const holder = new THREE.Group(); holder.rotation.y = a; bl.position.set(d, 2 * b + 1.1, 0); bl.rotation.x = 0.3; holder.add(bl); put('J', holder);
+      }
+      // labels
+      [['Q1', 'Q top layer (shaft hole)', [R * 0.62, 2 * b + 0.2, R * 0.45]], ['Q2', 'Q layer 2 (motor socket)', [R * 0.55, 0, -R * 0.6]], ['motor', 'motor', [1.1, b - 1.4, 0.6]],
+       ['motor', 'wires to the strut', [3, -10, 0.4]], ['R9', 'R9 collar', [-1.5, b - 2, 0.4]], ['pod', 'pod tube R2', [-r - 2.6, -6, 0]], ['Y', 'Y collar', [-r - 0.6, -1.6, 1.4]],
+       ['R3', 'R3 rim', [-R - 0.6, top * 0.5, 0]], ['I', 'I lip ring', [-rr * 0.5, top + 0.2, -R * 0.8]], ['hub', 'bottle-cap hub', [0, 2 * b + 2.8, 0]],
+       ['J', 'J blade', [L + 1.2, 2 * b + 1.1, 0]], ['cover', 'clear cover', [R * 0.3, top + 0.3, R * 0.75]]].forEach(([key, tx, at]) => {
+        const el = document.createElement('div'); el.className = 'llab'; el.textContent = tx; labWrap.appendChild(el);
+        labels.push({ key, el, at: new THREE.Vector3(...at) });
+      });
+      apply(); draw();
+    }
+
+    const shown = k => (k === 'pod' ? (st.tube || st.step === 4) && (st.step === 0 || st.step >= 4) : st.step === 0 || STEP_OF[k] <= st.step);
+    const lit = k => st.sel ? ID_OF[k] === ID_OF[st.sel] : st.step > 0 && HL[st.step].includes(k);
+    function apply() {
+      Object.entries(parts).forEach(([k, g]) => {
+        g.visible = shown(k);
+        g.position.y = DY[k] * st.ex + (st.step === 2 && (k === 'motor' || k === 'R9') ? -6 : 0);
+        const on = lit(k);
+        g.traverse(o => { if (o.material) o.material.emissive.setHex(on ? 0x8a3300 : o.material.userData.e0); });
+      });
+      renderer.clippingPlanes = st.cut ? [new THREE.Plane(new THREE.Vector3(0, 0, -1), 0)] : [];
+    }
+    function draw() {
+      const w = wrap.clientWidth, hgt = wrap.clientHeight;
+      if (!w || !hgt) return;
+      renderer.setSize(w, hgt, false); camera.aspect = w / hgt; camera.updateProjectionMatrix();
+      const c = Math.cos(cam.ph);
+      camera.position.set(cam.target.x + cam.r * Math.sin(cam.th) * c, cam.target.y + cam.r * Math.sin(cam.ph), cam.target.z + cam.r * Math.cos(cam.th) * c);
+      camera.lookAt(cam.target);
+      renderer.render(scene, camera);
+      labels.forEach(Lb => {
+        const g = parts[Lb.key], show = g && g.visible && !(st.cut && Lb.at.z > 0.3) && !(st.step === 0 && !st.cut && !st.goal && INSIDE.includes(Lb.key));
+        if (!show) { Lb.el.style.display = 'none'; return; }
+        const v = Lb.at.clone().add(g.position).project(camera);
+        Lb.el.style.display = v.z < 1 ? '' : 'none';
+        Lb.el.style.left = ((v.x + 1) / 2 * w) + 'px'; Lb.el.style.top = ((1 - v.y) / 2 * hgt) + 'px';
+        Lb.el.classList.toggle('on', lit(Lb.key));
+      });
+    }
+    function tick() {
+      const d = st.goal - st.ex, moving = Math.abs(d) > 0.003;
+      st.ex = moving ? st.ex + d * 0.14 : st.goal;
+      if (st.spin) ['hub', 'J'].forEach(k => { if (parts[k]) parts[k].rotation.y += 0.3; });
+      apply(); draw();
+      raf = moving || st.spin ? requestAnimationFrame(tick) : 0;
+    }
+    const go = () => { if (!raf) raf = requestAnimationFrame(tick); };
+    const aim = () => {
+      cam.target.x = 0; cam.target.z = 0;
+      if (st.cut) { cam.th = 0; cam.ph = 0.1; } else if (st.goal) { cam.th = 0.7; cam.ph = 0.12; } else [cam.th, cam.ph] = VIEW[st.step];
+      cam.r = st.goal ? 112 : st.cut ? 36 : 58; cam.target.y = st.goal ? -4.5 : st.cut ? -1.5 : -1;
+    };
+    function setStep(i) {
+      st.step = i; aim();
+      document.querySelectorAll('[data-rs]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.rs === i)));
+      $('rotorStepNo').textContent = i ? `Step ${i} of 6` : 'All together';
+      $('rotorStepTitle').textContent = STEPS[i][0]; $('rotorStepText').textContent = STEPS[i][1];
+      apply(); draw();
+    }
+    document.querySelectorAll('[data-rs]').forEach(b => b.addEventListener('click', () => setStep(+b.dataset.rs)));
+    const flip = (id, key) => $(id).addEventListener('click', e => { st[key] = !st[key]; e.currentTarget.setAttribute('aria-pressed', String(st[key])); });
+    $('rExplode').addEventListener('click', e => { st.goal = st.goal ? 0 : 1; e.currentTarget.setAttribute('aria-pressed', String(!!st.goal)); aim(); go(); });
+    flip('rCut', 'cut'); $('rCut').addEventListener('click', () => { aim(); apply(); draw(); });
+    flip('rTube', 'tube'); $('rTube').addEventListener('click', () => { apply(); draw(); });
+    flip('rSpin', 'spin'); $('rSpin').addEventListener('click', go);
+    function info(key) {
+      const id = ID_OF[key];
+      if (id === 'motor') return { tag: 'M', name: 'Hobby motor (3-6 V)', ds: 'Small DC hobby motor, one per pod, wrapped in collar R9 and pushed into the socket in Q. In the "You need" list under Motors and wiring.', go: 'Show in wiring' };
+      if (id === 'hub') return { tag: 'cap', name: 'Bottle-cap hub', ds: 'Any plastic bottle cap, open side up, pressed onto the motor shaft. The four blades J glue to its side.' };
+      if (key === 'Q2') return { tag: 'Q', name: 'Rotor base disc, layer 2', ds: 'The bottom layer of Q, with the motor-shaped socket (23 mm round, 18 mm across the flats) the motor pushes into. Cut sheet 4, marked "Q L2".', go: 'Show stencil' };
+      const pt = model.parts.find(q => q.id === id), rl = model.ruler.find(q => q.id === id);
+      if (pt) return { tag: id, name: key === 'cover' ? 'Clear cover (outline of ring I)' : pt.name, ds: `Stencil ${id} · cut ${pt.cut} · ${pt.mat}`, go: 'Show stencil' };
+      if (rl) return { tag: id, name: rl.name, ds: `Ruler cut, no stencil · ${rl.size}`, go: 'Show in ruler cuts' };
+      return null;
+    }
+    function select(key) {
+      st.sel = key && st.sel !== key ? key : null;
+      const el = $('rpick'), inf = st.sel && info(st.sel);
+      if (!inf) el.hidden = true;
+      else {
+        el.innerHTML = `<span class="tg">${inf.tag}</span><b>${inf.name}</b><span class="acts">${inf.go ? `<button class="go" data-rgo="1">${inf.go}</button>` : ''}<button data-rstep="1">Build step ${STEP_OF[st.sel]}</button><button data-rclear="1" aria-label="Clear selection">✕</button></span><span class="ds">${inf.ds}</span>`;
+        el.hidden = false;
+      }
+      apply(); draw();
+    }
+    $('rpick').addEventListener('click', e => {
+      if (e.target.closest('[data-rclear]')) { select(null); return; }
+      if (e.target.closest('[data-rstep]')) { const k = st.sel; st.sel = null; setStep(STEP_OF[k]); select(k); return; }
+      if (!e.target.closest('[data-rgo]')) return;
+      const flash = c => { if (!c) return; c.scrollIntoView({ block: 'center', behavior: 'smooth' }); c.classList.remove('flash'); void c.offsetWidth; c.classList.add('flash'); };
+      const id = ID_OF[st.sel];
+      if (id === 'motor') { flash(document.querySelector('.wiring')); return; }
+      if (model.parts.some(q => q.id === id)) { openBig(id); return; }
+      flash(document.querySelector(`tr[data-part="${id}"]`));
+    });
+    const ray = new THREE.Raycaster();
+    function pick(e) {
+      const rc = cv.getBoundingClientRect();
+      ray.setFromCamera(new THREE.Vector2((e.clientX - rc.left) / rc.width * 2 - 1, -(e.clientY - rc.top) / rc.height * 2 + 1), camera);
+      const hits = ray.intersectObjects(Object.values(parts).filter(g => g.visible), true).filter(h => !st.cut || h.point.z <= 0.01);
+      let o = hits[0] && hits[0].object; while (o && !o.userData.key) o = o.parent;
+      select(o ? o.userData.key : null);
+    }
+    viewControls(cv, cam, camera, draw, pick, 15, 140);
+    new ResizeObserver(draw).observe(wrap);
+    setStep(0);
+    // from the big model: open this viewer with that piece picked
+    const KEY_FOR = { Q: 'Q1', R9: 'R9', Y: 'Y', R3: 'R3', I: 'I', J: 'J', hub: 'hub', motor: 'motor' };
+    const show = id => { const k = KEY_FOR[id]; if (!k) return; wrap.scrollIntoView({ block: 'center', behavior: 'smooth' }); st.sel = null; select(k); };
+    return { build, show, has: id => id in KEY_FOR };
+  })();
+
+  // ---------- the seat back, tail fin and TAXI sign in 3D, layer by layer (units cm; x towards the nose, y up from the deck top, origin = middle of the seat box) ----------
+  const SV = (() => {
+    const cv = $('scv'), wrap = $('seatViewer'), labWrap = $('slabels');
+    const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+    const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(34, 4 / 3, 0.1, 1000);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x445544, 0.85));
+    const sun = new THREE.DirectionalLight(0xffffff, 0.7); sun.position.set(-14, 26, 18); scene.add(sun);
+    const fill = new THREE.DirectionalLight(0xffffff, 0.45); fill.position.set(20, 6, -12); scene.add(fill);
+    const root = new THREE.Group(); scene.add(root);
+    const cam = { th: -0.85, ph: 0.35, r: 95, target: new THREE.Vector3(-6, 9, 0) };
+    const st = { step: 0, ex: 0, goal: 0, cut: false, sel: null };
+    const ID_OF = { Ef2: 'E', Ef1: 'E', R8: 'R8', Eb: 'E', K: 'K', L: 'L', deck: 'A', D2: 'D2' };
+    const STEP_OF = { Ef2: 1, Ef1: 1, deck: 2, D2: 2, R8: 3, Eb: 4, K: 5, L: 6 };
+    const HL = { 1: ['Ef2', 'Ef1'], 2: ['Ef2', 'Ef1'], 3: ['R8'], 4: ['Eb'], 5: ['K'], 6: ['L'] };
+    // pull apart: the seat's layers slide apart front to back, the sign lifts, the deck and beam drop
+    const DX = { Ef2: 11, Ef1: 6, R8: 0, Eb: -6, K: -16, L: 0, deck: 0, D2: 0 };
+    const DY = { Ef2: 0, Ef1: 0, R8: 0, Eb: 0, K: 0, L: 10, deck: -6, D2: -12 };
+    const INSIDE = ['Ef1'];   // hidden behind the outer front layer: no label until pulled apart or cut
+    const VIEW = [[-0.45, 0.3], [0.95, 0.25], [0.95, 0.3], [-0.95, 0.35], [-0.95, 0.3], [-0.6, 0.2], [-0.9, 0.55]];
+    const STEPS = [
+      ['The finished seat', 'The seat back stands on the deck at the back of the waist hole, right over rear beam D2. "Pull apart" slides the layers apart front to back, "Cut in half" shows the hollow box, and the numbers walk you through the build.'],
+      ['Glue the two front layers', 'The seat front is two E panels glued face to face with Fevicol, waves crossed, pressed flat overnight. The one with the deck tab goes behind (inside the box); the plain one faces her back. Line up the strap slots.'],
+      ['Stand the front panel on the deck', 'Fold the tab back (into the box) and hot-glue it to the deck on the "seat front" line, just behind the waist hole and over beam D2 underneath. Check it stands upright before the glue sets.'],
+      ['Edge strip R8', 'Pre-roll R8 round a bottle (waves across the strip). Fold both rows of tabs in, then hot-glue one row to the inside face of the front panel, up one side, over the rounded top and down the other side, a few tabs at a time.'],
+      ['Seat back panel', 'Fold the back panel\'s tab in too. Run glue along R8\'s other row of tabs and on the tab, and press the back panel on, on the "seat back" line. The seat is now a 4 cm thick closed box.'],
+      ['Tail fin K', 'Cut the back, top and front edge tabs off the flipped copy. Bend both sides gently on the green lines, glue their base tabs to the deck and their front tabs up the back of the seat on the marked line, then glue the edge tabs of one side inside the other.'],
+      ['TAXI sign L', 'Score the dashed lines on the cereal-box card, fold it into a box and glue the end tabs inside. Fold the two bottom tabs in and glue them to the top of the seat, centred.']
+    ];
+    let parts = {}, labels = [], raf = 0, seatH = 19;
+    const mat = o => { const m = new THREE.MeshStandardMaterial(Object.assign({ roughness: 0.65, side: THREE.DoubleSide }, o)); m.userData.e0 = m.emissive.getHex(); return m; };
+    // seat outline seen from the front (u across, v up), inset d on the sides and top; bottom edge open
+    const outline = (hw, H, R, d) => {
+      const o = [new THREE.Vector2(-(hw - d), 0), new THREE.Vector2(-(hw - d), H - R)], r = Math.max(0.01, R - d);
+      for (let i = 1; i < 12; i++) { const a = Math.PI - i / 12 * Math.PI / 2; o.push(new THREE.Vector2(-(hw - R) + r * Math.cos(a), H - R + r * Math.sin(a))); }
+      o.push(new THREE.Vector2(-(hw - R), H - d), new THREE.Vector2(hw - R, H - d));
+      for (let i = 1; i < 12; i++) { const a = Math.PI / 2 - i / 12 * Math.PI / 2; o.push(new THREE.Vector2(hw - R + r * Math.cos(a), H - R + r * Math.sin(a))); }
+      o.push(new THREE.Vector2(hw - d, H - R), new THREE.Vector2(hw - d, 0));
+      return o;
+    };
+    // a flat piece in the u-v plane, x0..x1 thick along x
+    const xslab = (shape, x0, x1) => { const g = new THREE.ExtrudeGeometry(shape, { depth: x1 - x0, bevelEnabled: false, curveSegments: 12 }); g.rotateY(Math.PI / 2); g.translate(x0, 0, 0); return g; };
+    const box = (x0, x1, y0, y1, z0, z1) => { const g = new THREE.BoxGeometry(x1 - x0, y1 - y0, z1 - z0); g.translate((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2); return g; };
+
+    function build(model) {
+      const p = model.p, h = model.helpers;
+      root.clear(); parts = {}; labels = []; labWrap.innerHTML = ''; home = null;
+      const put = (key, obj) => { (parts[key] = parts[key] || new THREE.Group()).add(obj); parts[key].userData.key = key; root.add(parts[key]); };
+      const b = p.board, hw = p.backW / 2, H = p.backH, R = p.backR, T = p.backT, xc = p.backX - T / 2;
+      const X = x => x - xc, xf = X(p.backX), xb = X(p.backX - T);
+      seatH = H;
+      const KR = 0xc49a6c, KR2 = 0xb08458, STRIP = 0xd6b27a, CARD = 0xe6e0d4;
+      // front panel: two layers, both with the strap slots; layer 1 (behind) carries the deck tab
+      const sx = Math.min(7, hw - 4);
+      const slotted = () => {
+        const sh = new THREE.Shape(outline(hw, H, R, 0));
+        [-1, 1].forEach(s => { const u0 = s * sx - 1.75, u1 = s * sx + 1.75, v0 = H - 3.8, v1 = H - 3.2;
+          sh.holes.push(new THREE.Path([new THREE.Vector2(u0, v0), new THREE.Vector2(u0, v1), new THREE.Vector2(u1, v1), new THREE.Vector2(u1, v0)])); });
+        return sh;
+      };
+      put('Ef2', new THREE.Mesh(xslab(slotted(), xf - b, xf), mat({ color: KR })));
+      put('Ef1', new THREE.Mesh(xslab(slotted(), xf - 2 * b, xf - b), mat({ color: KR2 })));
+      const tbL = Math.min(p.backTab, T - 3 * b - 0.1);
+      put('Ef1', new THREE.Mesh(box(xf - 2 * b - tbL, xf - 2 * b, 0, b * 0.6, -(hw - 1), hw - 1), mat({ color: KR2 })));
+      // edge strip R8 round the sides and top, between the panels, with its two rows of tabs folded in against them
+      const ring = (d0, d1) => new THREE.Shape(outline(hw, H, R, d0).concat(outline(hw, H, R, d1).reverse()));
+      put('R8', new THREE.Mesh(xslab(ring(0, b), xb + b, xf - 2 * b), mat({ color: STRIP })));
+      put('R8', new THREE.Mesh(xslab(ring(b, b + 1.5), xf - 2 * b - 0.08, xf - 2 * b - 0.02), mat({ color: STRIP })));
+      put('R8', new THREE.Mesh(xslab(ring(b, b + 1.5), xb + b + 0.02, xb + b + 0.08), mat({ color: STRIP })));
+      // back panel, single layer, its tab folded into the box on top of the front one
+      put('Eb', new THREE.Mesh(xslab(new THREE.Shape(outline(hw, H, R, 0)), xb, xb + b), mat({ color: KR })));
+      put('Eb', new THREE.Mesh(box(xb + b, xb + b + tbL, b * 0.6, b * 1.2, -(hw - 1), hw - 1), mat({ color: KR })));
+      // tail fin: each side a fan of three triangles round A, as on the big model
+      {
+        const F = h.finPts(p), V = (q, sg) => [X(q[0]), q[2], sg * q[1]], v = [];
+        [1, -1].forEach(sg => { const A = V(F.A, sg); [['B', 'C'], ['C', 'D'], ['D', 'E']].forEach(([u, w]) => v.push(...A, ...V(F[u], sg), ...V(F[w], sg))); });
+        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); g.computeVertexNormals();
+        put('K', new THREE.Mesh(g, mat({ color: 0x9a7650 })));
+      }
+      // TAXI sign box on top of the seat
+      put('L', new THREE.Mesh(box(-p.taxiD / 2, p.taxiD / 2, H, H + p.taxiH, -p.taxiW / 2, p.taxiW / 2), mat({ color: CARD })));
+      // the deck round the seat (it ends at the waist hole, 1 cm in front of the seat) and rear beam D2 under it
+      put('deck', new THREE.Mesh(box(X(p.deckRear), X(p.holeRear), -2 * b, 0, -(hw + 6), hw + 6), mat({ color: 0xa98a63 })));
+      put('D2', new THREE.Mesh(box(xf - 2 * b, xf, -2 * b - p.beamD, -2 * b, -19.5, 19.5), mat({ color: KR2 })));
+      const F = h.finPts(p), fin = [X((F.C[0] + F.D[0]) / 2), F.C[2] - 1, 1];
+      // labels on a panel face (side +1 front, -1 back) only show while that face is towards the camera
+      [['Ef2', 'E seat front', [xf + 0.2, H * 0.55, hw * 0.45], 1], ['Ef2', 'strap slots', [xf + 0.2, H - 3.5, -sx], 1], ['Ef1', 'E layer 1 + deck tab', [xf - 2 * b - tbL / 2, 0.4, -hw * 0.3]],
+       ['R8', 'R8 edge strip', [0, H * 0.5, hw + 0.3]], ['Eb', 'E seat back', [xb - 0.2, H * 0.45, -hw * 0.5], -1], ['K', 'K tail fin', fin],
+       ['L', 'L TAXI sign', [0, H + p.taxiH + 0.8, 0]], ['deck', 'deck A', [X(p.deckRear) + 3, 0.2, hw + 4]],
+       ['D2', 'D2 rear beam (under the deck)', [xf - b, -2 * b - p.beamD * 0.6, hw + 3]]].forEach(([key, tx, at, side]) => {
+        const el = document.createElement('div'); el.className = 'llab'; el.textContent = tx; labWrap.appendChild(el);
+        labels.push({ key, el, at: new THREE.Vector3(...at), side });
+      });
+      cam.target.set(X((p.backX + p.deckRear) / 2), H / 2, 0);
+      apply(); draw();
+    }
+
+    const shown = k => st.step === 0 || STEP_OF[k] <= st.step || k === 'deck' || k === 'D2';
+    const lit = k => st.sel ? ID_OF[k] === ID_OF[st.sel] && (ID_OF[k] !== 'E' || k === st.sel || (k[1] === 'f' && st.sel[1] === 'f')) : st.step > 0 && HL[st.step].includes(k);
+    function apply() {
+      Object.entries(parts).forEach(([k, g]) => {
+        // step 1: the front panel lies flat on its face while the two layers are glued
+        g.visible = shown(k) && !(st.step === 1 && !['Ef1', 'Ef2'].includes(k));
+        g.position.set(DX[k] * st.ex, DY[k] * st.ex, 0);
+        const on = lit(k);
+        g.traverse(o => { if (o.material) o.material.emissive.setHex(on ? 0x8a3300 : o.material.userData.e0); });
+      });
+      renderer.clippingPlanes = st.cut ? [new THREE.Plane(new THREE.Vector3(0, 0, -1), 0)] : [];
+    }
+    function draw() {
+      const w = wrap.clientWidth, hgt = wrap.clientHeight;
+      if (!w || !hgt) return;
+      renderer.setSize(w, hgt, false); camera.aspect = w / hgt; camera.updateProjectionMatrix();
+      const c = Math.cos(cam.ph);
+      camera.position.set(cam.target.x + cam.r * Math.sin(cam.th) * c, cam.target.y + cam.r * Math.sin(cam.ph), cam.target.z + cam.r * Math.cos(cam.th) * c);
+      camera.lookAt(cam.target);
+      renderer.render(scene, camera);
+      labels.forEach(Lb => {
+        const g = parts[Lb.key], show = g && g.visible && !(st.cut && Lb.at.z > 0.3) && !(!st.cut && !st.goal && INSIDE.includes(Lb.key)) && !(Lb.side && Lb.side * (camera.position.x - Lb.at.x - g.position.x) < 0);
+        if (!show) { Lb.el.style.display = 'none'; return; }
+        const v = Lb.at.clone().add(g.position).project(camera);
+        Lb.el.style.display = v.z < 1 ? '' : 'none';
+        Lb.el.style.left = ((v.x + 1) / 2 * w) + 'px'; Lb.el.style.top = ((1 - v.y) / 2 * hgt) + 'px';
+        Lb.el.classList.toggle('on', lit(Lb.key));
+      });
+    }
+    function tick() {
+      const d = st.goal - st.ex, moving = Math.abs(d) > 0.003;
+      st.ex = moving ? st.ex + d * 0.14 : st.goal;
+      apply(); draw();
+      raf = moving ? requestAnimationFrame(tick) : 0;
+    }
+    const go = () => { if (!raf) raf = requestAnimationFrame(tick); };
+    let home = null;
+    const aim = () => {
+      home = home || cam.target.clone();
+      cam.target.copy(home);
+      if (st.cut) { cam.th = 0; cam.ph = 0.1; } else if (st.goal) { cam.th = -0.45; cam.ph = 0.3; } else [cam.th, cam.ph] = VIEW[st.step];
+      cam.r = st.goal ? 125 : st.cut ? 62 : st.step === 1 ? 70 : 95;
+      if (st.goal) cam.target.y -= 2;
+      if (st.cut) cam.target.set(-2, seatH * 0.6, 0);   // close on the seat box: the hollow between the panels
+    };
+    function setStep(i) {
+      st.step = i; aim();
+      document.querySelectorAll('[data-ss]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.ss === i)));
+      $('seatStepNo').textContent = i ? `Step ${i} of 6` : 'All together';
+      $('seatStepTitle').textContent = STEPS[i][0]; $('seatStepText').textContent = STEPS[i][1];
+      apply(); draw();
+    }
+    document.querySelectorAll('[data-ss]').forEach(b => b.addEventListener('click', () => setStep(+b.dataset.ss)));
+    $('sExplode').addEventListener('click', e => { st.goal = st.goal ? 0 : 1; e.currentTarget.setAttribute('aria-pressed', String(!!st.goal)); aim(); go(); });
+    $('sCut').addEventListener('click', e => { st.cut = !st.cut; e.currentTarget.setAttribute('aria-pressed', String(st.cut)); aim(); apply(); draw(); });
+    function info(key) {
+      const id = ID_OF[key], pt = model.parts.find(q => q.id === id), rl = model.ruler.find(q => q.id === id);
+      const nm = { Ef2: 'Seat front panel (plain layer, faces her back)', Ef1: 'Seat front panel, layer 1 (with the deck tab)', Eb: 'Seat back panel (single layer)' }[key];
+      if (pt) return { tag: id, name: nm || pt.name, ds: `Stencil ${id} · cut ${pt.cut} · ${pt.mat}`, go: 'Show stencil' };
+      if (rl) return { tag: id, name: rl.name, ds: `Strip, no stencil outline · ${rl.size}`, go: 'Show in ruler cuts' };
+      return null;
+    }
+    function select(key) {
+      st.sel = key && st.sel !== key ? key : null;
+      const el = $('spick'), inf = st.sel && info(st.sel);
+      if (!inf) el.hidden = true;
+      else {
+        el.innerHTML = `<span class="tg">${inf.tag}</span><b>${inf.name}</b><span class="acts">${inf.go ? `<button class="go" data-sgo="1">${inf.go}</button>` : ''}<button data-sstep="1">Build step ${STEP_OF[st.sel]}</button><button data-sclear="1" aria-label="Clear selection">✕</button></span><span class="ds">${inf.ds}</span>`;
+        el.hidden = false;
+      }
+      apply(); draw();
+    }
+    $('spick').addEventListener('click', e => {
+      if (e.target.closest('[data-sclear]')) { select(null); return; }
+      if (e.target.closest('[data-sstep]')) { const k = st.sel; st.sel = null; setStep(STEP_OF[k]); select(k); return; }
+      if (!e.target.closest('[data-sgo]')) return;
+      const id = ID_OF[st.sel];
+      if (model.parts.some(q => q.id === id)) { openBig(id); return; }
+      const c = document.querySelector(`tr[data-part="${id}"]`);
+      if (c) { c.scrollIntoView({ block: 'center', behavior: 'smooth' }); c.classList.remove('flash'); void c.offsetWidth; c.classList.add('flash'); }
+    });
+    const ray = new THREE.Raycaster();
+    function pick(e) {
+      const rc = cv.getBoundingClientRect();
+      ray.setFromCamera(new THREE.Vector2((e.clientX - rc.left) / rc.width * 2 - 1, -(e.clientY - rc.top) / rc.height * 2 + 1), camera);
+      const hits = ray.intersectObjects(Object.values(parts).filter(g => g.visible), true).filter(h => !st.cut || h.point.z <= 0.01);
+      let o = hits[0] && hits[0].object; while (o && !o.userData.key) o = o.parent;
+      select(o ? o.userData.key : null);
+    }
+    viewControls(cv, cam, camera, draw, pick, 25, 220);
+    new ResizeObserver(draw).observe(wrap);
+    // from the big model: open this viewer with that piece picked
+    const KEY_FOR = { E: 'Ef2', R8: 'R8', K: 'K', L: 'L' };
+    const show = id => { const k = KEY_FOR[id]; if (!k) return; wrap.scrollIntoView({ block: 'center', behavior: 'smooth' }); st.sel = null; select(k); };
+    return { build: m => { build(m); setStep(st.step); }, show, has: id => id in KEY_FOR };
+  })();
+
+  // step-by-step headlight drawings, to scale from the current model
+  function renderLamps() {
+    LV.build(model.p);
+    const p = model.p, h = model.helpers, f1 = v => v.toFixed(1), out = [];
+    const tx = (x, y, s, o) => `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}"${o ? ' ' + o : ''}>${s}</text>`;
+    const svg = (w, hh, label, body) => `<svg viewBox="0 0 ${w} ${hh}" role="img" aria-label="${label}">${body}</svg>`;
+    const card = (n, title, pic, text) => `<div class="tstep"><h3><span>${n}</span>${title}</h3>${pic}<p>${text}</p></div>`;
+    // egg outline: u towards the back, v up; mirror = seen from inside the body
+    const egg = (grow, cx, cy, sc, mirror) => 'M' + h.lampLocal(p, grow, 64).map(([u, v]) => `${(cx + (mirror ? -u : u) * sc).toFixed(1)} ${(cy - v * sc).toFixed(1)}`).join(' L') + ' Z';
+    const lead = (x1, y1, x2, y2) => `<line class="dim" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+    const H2 = p.lampH / 2, R7 = model.parts.find(q => q.id === 'R7'), W = model.parts.find(q => q.id === 'W');
+
+    // 1. the layers, cut through the middle of the headlight
+    {
+      const sc = 18, X0 = 92, cy = 104, hw = H2 * sc, wt = 7, lx = X0 + wt, bx = lx + 3, bd = 3 * sc, xb = bx + bd;
+      let b = tx(X0 - 40, 16, 'OUTSIDE', 'text-anchor="middle" class="sm"') + tx(xb + 10, 16, 'INSIDE THE BODY', 'text-anchor="middle" class="sm"');
+      b += `<rect class="tube" x="${X0}" y="18" width="${wt}" height="${cy - hw - 18}"/><rect class="tube" x="${X0}" y="${cy + hw}" width="${wt}" height="${190 - cy - hw}"/>`;
+      b += `<rect class="trimf" x="${X0 - 3}" y="${cy - hw - 0.7 * sc}" width="3" height="${0.7 * sc + 2}"/><rect class="trimf" x="${X0 - 3}" y="${cy + hw - 2}" width="3" height="${0.7 * sc + 2}"/>`;
+      b += `<path class="hoodf" d="M${X0 - 3} ${cy - hw - 0.7 * sc} L${X0 - 3 - 2 * sc} ${cy - hw - 0.7 * sc + 6} L${X0 - 3 - 2 * sc} ${cy - hw - 0.7 * sc + 9} L${X0 - 3} ${cy - hw - 0.7 * sc + 4} Z"/>`;
+      b += `<rect class="lensf" x="${lx}" y="${cy - hw - 0.6 * sc}" width="3" height="${2 * hw + 1.2 * sc}"/>`;
+      [-1, 1].forEach(sd => {
+        const y = cy + sd * (hw + 0.3 * sc);
+        b += `<rect class="paper" x="${bx}" y="${y - 1.5}" width="${bd}" height="3"/>`;
+        b += `<rect class="paper" x="${bx}" y="${sd < 0 ? y - 0.9 * sc : y}" width="3" height="${0.9 * sc}"/>`;
+        b += `<rect class="paper" x="${xb - 3}" y="${sd < 0 ? y : y - 0.9 * sc}" width="3" height="${0.9 * sc}"/>`;
+      });
+      b += `<rect class="paper" x="${xb}" y="${cy - hw - 0.3 * sc}" width="3" height="${2 * hw + 0.6 * sc}"/>`;
+      b += `<rect class="glowf" x="${bx + 3}" y="${cy - hw - 0.3 * sc + 2}" width="${bd - 6}" height="${2 * hw + 0.6 * sc - 4}" opacity=".7"/>`;
+      b += `<path class="lensf" d="M${xb} ${cy - 9} L${xb - 14} ${cy - 9} A9 9 0 0 0 ${xb - 14} ${cy + 9} L${xb} ${cy + 9} Z"/>`;
+      b += `<path class="wire" d="M${xb + 3} ${cy - 4} H${xb + 40} M${xb + 3} ${cy + 4} H${xb + 40}"/><rect class="box" x="${xb + 14}" y="${cy - 8}" width="14" height="7" rx="1" style="fill:var(--bg);stroke:var(--ink)"/>`;
+      const L = [['R7 hood', X0 - 3 - sc, cy - hw - 0.7 * sc + 4], ['U trim', X0 - 3, cy - hw - 0.2 * sc], ['C1 wall', X0 + 3, 30], ['V lens', lx + 1.5, cy + hw + 0.4 * sc], ['W box side', bx + bd / 2, cy + hw + 0.3 * sc], ['X box back', xb + 1.5, cy + hw], ['LED', xb - 8, cy]];
+      L.forEach(([t, ax, ay], i) => { const ly = 34 + i * 22; b += lead(262, ly - 4, ax, ay) + tx(266, ly, t, 'class="sm"'); });
+      b += tx(xb + 6, cy + 20, 'to battery', 'class="sm"');
+      out.push(card(1, 'How it fits together', svg(340, 196, 'Cross-section of the headlight: trim and hood outside, wall, lens, card light box, LED in its back', b),
+        'Cut through the middle of one headlight. Outside: trim U round the window and hood R7 above it. Then wall C1 with the egg window, white lens V glued behind it, and a closed card box (side W, back X) with the LED in its back. The box is painted white inside, so the light bounces round and the whole egg glows.'));
+    }
+
+    // 2. the pieces to cut
+    {
+      const sc = 8.5, cy = 46; let b = '';
+      const pos = [44, 124, 204, 284];
+      b += `<rect class="tube" x="${pos[0] - 36}" y="${cy - 34}" width="72" height="68"/><path class="holef" d="${egg(0, pos[0], cy, sc)}"/>`;
+      b += `<path class="trimf" fill-rule="evenodd" d="${egg(0.7, pos[1], cy, sc)} ${egg(-0.1, pos[1], cy, sc)}"/>`;
+      b += `<path class="lensf" d="${egg(0.6, pos[2], cy, sc)}"/><path class="hid" d="${egg(0, pos[2], cy, sc)}"/>`;
+      b += `<path class="paper" d="${egg(0.3, pos[3], cy, sc)}"/><circle cx="${pos[3]}" cy="${cy}" r="4" class="holef"/>`;
+      [['C1 window', 'cut out'], ['U trim', 'silver card'], ['V lens', 'plastic'], ['X back', 'card']].forEach(([a, c2], i) => { b += tx(pos[i], cy + 46, a, 'text-anchor="middle"') + tx(pos[i], cy + 59, c2, 'text-anchor="middle" class="sm"'); });
+      const y2 = 132;
+      const wl = parseFloat(W.size.split(' x ')[1]), ws = 300 / Math.max(wl, 22), x0 = 20;
+      b += `<rect class="paper" x="${x0}" y="${y2}" width="${(wl * ws).toFixed(1)}" height="${(5 * ws).toFixed(1)}"/>`;
+      b += `<rect x="${x0}" y="${(y2 + ws).toFixed(1)}" width="${(wl * ws).toFixed(1)}" height="${(3 * ws).toFixed(1)}" fill="#ffffff" stroke="none" opacity=".85"/>`;
+      [1, 4].forEach(k => { b += `<line class="hid" x1="${x0}" y1="${(y2 + k * ws).toFixed(1)}" x2="${(x0 + wl * ws).toFixed(1)}" y2="${(y2 + k * ws).toFixed(1)}"/>`; });
+      for (let k = 1; k < wl - 0.3; k++) { const x = x0 + k * ws, n = 0.25 * ws;
+        b += `<path class="waste" style="fill-opacity:.9" d="M${(x - n).toFixed(1)} ${y2} L${x.toFixed(1)} ${(y2 + ws).toFixed(1)} L${(x + n).toFixed(1)} ${y2} Z M${(x - n).toFixed(1)} ${(y2 + 5 * ws).toFixed(1)} L${x.toFixed(1)} ${(y2 + 4 * ws).toFixed(1)} L${(x + n).toFixed(1)} ${(y2 + 5 * ws).toFixed(1)} Z"/>`; }
+      b += tx(x0, y2 - 6, `W box side ${W.size}: red V's = cut out`, 'class="sm"');
+      out.push(card(2, 'Cut the pieces', svg(340, y2 + 5 * ws + 8, 'The headlight pieces: the window in C1, trim U, lens V, box back X and the box side strip W', b),
+        `All printed to trace. U, V and X are traced from wall C1's own curve, so they fit it exactly; cut a left and a right of each (flip the stencil). Strip W and hood R7 (${R7.size}) are printed too: cut out every small red V along the tab edges and keep the tabs between them. On W the top row folds OUT onto the wall, the bottom row folds IN for back X.`));
+    }
+
+    // 3. lens behind the window, seen from inside
+    {
+      const sc = 13, cx = 170, cy = 84; let b = '';
+      b += `<rect class="tube" x="40" y="14" width="260" height="142" rx="4"/>`;
+      b += `<path class="lensf" d="${egg(0.6, cx, cy, sc, true)}"/><path class="hid" d="${egg(0, cx, cy, sc, true)}"/>`;
+      h.lampLocal(p, 0.32, 14).forEach(([u, v]) => { b += `<circle cx="${(cx - u * sc).toFixed(1)}" cy="${(cy - v * sc).toFixed(1)}" r="3" fill="var(--taxi)"/>`; });
+      b += tx(cx, cy + 4, 'lens V', 'text-anchor="middle" class="sm"') + tx(48, 30, 'wall C1, inside face', 'class="sm"') + tx(48, 148, 'dashed = the window behind', 'class="sm"');
+      out.push(card(3, 'Glue the lens behind the window', svg(340, 170, 'Seen from inside the body: lens V centred over the window and glued round its margin', b),
+        'Working from inside the body, centre lens V over the egg window (its dashed line matches the window edge) and glue it round its 6 mm margin with small dots of hot glue. Keep glue off the part that shows through the window. Smooth side of the plastic facing out.'));
+    }
+
+    // 4. box side W round the window, seen from inside
+    {
+      const sc = 13, cx = 170, cy = 84; let b = '';
+      b += `<rect class="tube" x="40" y="14" width="260" height="142" rx="4"/><path class="lensf" d="${egg(0.6, cx, cy, sc, true)}"/>`;
+      const ring = h.lampLocal(p, 0.3, 22);
+      ring.forEach(([u, v]) => { const n = Math.hypot(u, v) || 1, x = cx - u * sc, y = cy - v * sc, ox = -u / n, oy = -v / n; b += `<line x1="${x.toFixed(1)}" y1="${y.toFixed(1)}" x2="${(x - ox * 12).toFixed(1)}" y2="${(y + oy * 12).toFixed(1)}" stroke="var(--muted)" stroke-width="5"/>`; });
+      b += `<path d="${egg(0.3, cx, cy, sc, true)}" fill="none" stroke="var(--ink)" stroke-width="4"/><path d="${egg(0.15, cx, cy, sc, true)}" fill="#ffffff" stroke="none" opacity=".9"/>`;
+      b += tx(cx, cy + 4, 'white inside', 'text-anchor="middle" class="sm"') + tx(48, 30, 'front tabs fold OUT', 'class="sm"') + tx(48, 148, 'and glue to the wall, over the lens', 'class="sm"');
+      out.push(card(4, 'Glue the box side round it', svg(340, 170, 'Seen from inside: strip W bent round the window, its front tabs folded out and glued to the wall', b),
+        'Bend strip W round into the egg shape, painted side in, and tape the ends together where they overlap. Fold its front tabs OUT and glue them to the inside of the wall all round the window, on top of the lens margin. It stands 3 cm into the body. The back tabs fold IN, ready for the back panel.'));
+    }
+
+    // 5. LED in the back panel
+    {
+      const sc = 14, cx = 120, cy = 82; let b = `<path class="paper" d="${egg(0.3, cx, cy, sc, true)}"/>`;
+      b += `<circle cx="${cx}" cy="${cy}" r="7" class="lensf"/><circle cx="${cx}" cy="${cy}" r="11" fill="var(--taxi)" opacity=".55"/>`;
+      b += `<path class="wire" d="M${cx + 3} ${cy - 3} L${cx + 90} ${cy - 30}"/><path class="wire" style="stroke:var(--ink)" d="M${cx + 3} ${cy + 3} L${cx + 90} ${cy + 24}"/>`;
+      b += `<rect x="${cx + 44}" y="${cy - 24}" width="18" height="8" rx="2" transform="rotate(-17 ${cx + 53} ${cy - 20})" style="fill:var(--bg);stroke:var(--ink)"/>`;
+      b += tx(cx + 94, cy - 30, 'long leg (+)', 'class="sm"') + tx(cx + 94, cy - 18, '+ 100 Ω resistor', 'class="sm"') + tx(cx + 94, cy + 28, 'short leg (−)', 'class="sm"');
+      b += tx(cx, cy + p.lampH / 2 * sc + 22, 'back X, seen from behind', 'text-anchor="middle" class="sm"') + tx(cx, cy - 16, 'hot glue', 'text-anchor="middle" class="sm"');
+      out.push(card(5, 'Fit the LED in the back panel', svg(340, cy + p.lampH / 2 * sc + 30, 'The LED pushed through the centre hole of back panel X from behind and hot-glued, resistor on the long leg', b),
+        'Paint the front face of X white. Push the 10 mm LED through the centre hole from the back so its dome sits inside the box, and hot-glue it round the hole. Solder or twist the 100 Ω resistor onto the long (+) leg, then the wires. Cover both legs with tape so they can never touch each other.'));
+    }
+
+    // 6. close the box, then the outside: trim and hood
+    {
+      const sc = 15, cx = 170, cy = 92; let b = `<rect class="blackf" x="40" y="10" width="260" height="160" rx="10"/>`;
+      b += `<path class="trimf" fill-rule="evenodd" d="${egg(0.7, cx, cy, sc)} ${egg(-0.1, cx, cy, sc)}"/><path class="glowf" d="${egg(-0.1, cx, cy, sc)}"/>`;
+      const top = h.lampLocal(p, 0.7, 64).filter(q => q[1] > 0).sort((a, c) => a[0] - c[0]);
+      b += `<path class="hoodf" d="M${top.map(([u, v]) => `${(cx + u * sc).toFixed(1)} ${(cy - v * sc).toFixed(1)}`).join(' L')} ${top.slice().reverse().map(([u, v]) => `L${(cx + u * sc * 1.04).toFixed(1)} ${(cy - v * sc - 9).toFixed(1)}`).join(' ')} Z"/>`;
+      b += tx(cx, cy + 4, 'glows white', 'text-anchor="middle" class="sm"') + tx(56, 30, 'R7 hood', 'style="fill:#fff"') + tx(56, 160, 'U trim', 'style="fill:#fff"') + tx(284, 160, 'NOSE ←', 'text-anchor="end" style="fill:#fff"');
+      b += lead(92, 26, cx - 20, cy - H2 * sc - 6).replace('class="dim"', 'class="dim" style="stroke:#9aa5b8"') + lead(84, 156, cx - 40, cy + 26).replace('class="dim"', 'class="dim" style="stroke:#9aa5b8"');
+      out.push(card(6, 'Close it up and finish the outside', svg(340, 180, 'Outside view of the left headlight: glowing egg, silver trim U round it, yellow hood R7 over the top', b),
+        `Glue back X onto the back tabs of W, LED inside, and run the wires under the right deck edge to the battery. Switch on to check it glows evenly. Then on the outside: glue trim U round the window, pointed end up and towards the back. Bend hood R7 (${R7.size.split(' thin')[0]}) into an arch over the top of the trim, fold its tabs back and glue them to the wall so it sticks out like an eyelid. Paint the hood yellow and the patch round it black.`));
+    }
+    $('lamps').innerHTML = out.join('');
+  }
+  function renderLists() {
+    $('parts').innerHTML = model.parts.map(pt => `
+      <article class="card" data-part="${pt.id}" aria-pressed="${state.sel === pt.id}">
+        <button class="cardsel" data-part="${pt.id}" aria-pressed="${state.sel === pt.id}">
+        <div class="thumb">${svgFor(pt)}</div>
+        <div class="hd"><span class="tag">${pt.id}</span><span class="nm">${pt.name}</span></div>
+        <dl>
+          <dt>Cut</dt><dd>${pt.cut}</dd>
+          <dt>Size</dt><dd class="num">${pt.w.toFixed(1)} × ${pt.h.toFixed(1)} cm</dd>
+          <dt>From</dt><dd>${pt.mat}</dd>
+          <dt>A4 pages</dt><dd class="num">${pagesFor(pt.id)}</dd>
+        </dl>
+        <p>${pt.note}</p>
+        </button>
+        <button class="expand" data-expand="${pt.id}" aria-label="Open stencil ${pt.id} larger" title="Open larger">${EXPAND}</button>
+      </article>`).join('');
+    $('ruler').innerHTML = model.ruler.map(r => `<tr data-part="${r.id}" tabindex="0" aria-selected="${state.sel === r.id}"><td><span class="tag">${r.id}</span> ${r.name}</td><td class="num">${r.size}</td><td>${r.cut}</td><td>${r.how}</td></tr>`).join('');
+    $('finder').innerHTML = model.parts.filter(pt => pt.count).concat(model.ruler.filter(r => r.id !== 'R5'))
+      .map(q => `<button class="fchip" data-part="${q.id}" aria-pressed="${state.sel === q.id}"><b>${q.id}</b>${q.name}</button>`).join('');
+    $('elec').innerHTML = model.electrics.map(([a, b]) => `<tr><td><b>${a}</b></td><td>${b}</td></tr>`).join('');
+    $('a4info').textContent = `${layout.pages.length + 1} A4 pages for a home printer, tiled with a 5 cm grid and trim marks.`;
+    const p = model.p, st = model.stats;
+    $('devs').innerHTML = [
+      `<b>Same as the blueprint:</b> ${p.L} × ${p.W} cm body, ${st.span.toFixed(0)} cm across the rotors, ${p.rotorD} cm rotors on straight struts, canopy in front, backrest with TAXI sign and tail behind.`,
+      `<b>Body depth ${p.H} cm</b> (blueprint 22) so the bottom edge sits at her mid-thigh and she can still walk and climb a step.`,
+      `<b>Waist hole ${p.holeW.toFixed(1)} × ${p.holeD.toFixed(1)} cm</b> (her hips + 7 cm), placed toward the back like the blueprint.`,
+      `<b>Seat back ${p.backH} cm tall, ${p.seatT} cm thick</b> (blueprint ~23): kept below her shoulders so the TAXI sign stays behind her head, not against it.`,
+      `<b>Rotors lean ${p.tilt}° forward</b> (blueprint: flat) so the audience in front sees the blades spin, not just the rim. The slanted pod top does it; nothing else changes.`,
+      `<b>Rotors ${(p.L / 2 - p.tubeFX).toFixed(0)} cm from the nose</b> (blueprint 25) so the strut tube can run straight through the body just in front of her.`,
+      `<b>Back like the blueprint:</b> a thick box seat with stitch lines and a tall swept tail fin with the leaf logo, black rear panel with red tail lights, checker stripe all the way round. The battery box hides under the deck, so nothing is stuck on her back.`,
+      `<b>Added for real use:</b> strap slots, a TAKE-OFF button for the pilot, hidden battery, wire route and clear rotor covers. A drawing doesn't need these, but the costume does.`
+    ].map(t => `<li>${t}</li>`).join('');
+  }
+  function renderStats() {
+    const st = model.stats, cg = st.cgFromHips;
+    const items = [
+      [st.span.toFixed(0) + ' cm', 'rotor span, tip to tip', st.span > 84],
+      ['≈ ' + Math.round(st.grams / 10) * 10 + ' g', 'total, with motors and batteries', st.grams > 1000],
+      [Math.abs(cg).toFixed(1) + ' cm ' + (cg >= 0 ? 'fwd' : 'back'), 'balance point vs her hips', Math.abs(cg) > 7],
+      [Math.round(st.frontShare * 100) + ' / ' + Math.round(100 - st.frontShare * 100), 'weight on front / back straps', st.frontShare > 0.8 || st.frontShare < 0.2],
+      [st.sideRim.toFixed(1) + ' cm', 'deck beside her hips', st.sideRim < 4.5],
+      [st.topAboveWaist.toFixed(0) + ' cm', 'TAXI sign top above waist', false]
+    ];
+    $('stats').innerHTML = items.map(([v, l, w]) => `<div class="stat${w ? ' warn' : ''}"><b>${v}</b><span>${l}${w ? ' · check this' : ''}</span></div>`).join('');
+    const changed = Object.keys(state.over).length > 0;
+    const n = $('pdfnote');
+    n.className = 'note' + (changed ? ' changed' : '');
+    n.textContent = changed
+      ? 'These sizes differ from your PDF stencils. Tap "Copy sizes for Claude" and paste them in the chat to get new ones.'
+      : `These sizes match your PDF stencils (A4: ${layout.pages.length + 1} pages).`;
+  }
+
+  // ---------- 3D ----------
+  const cv = $('cv');
+  const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(32, 1, 1, 3000);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x445544, 0.85));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.75); sun.position.set(120, 220, 160); scene.add(sun);
+  const fill = new THREE.DirectionalLight(0xffffff, 0.35); fill.position.set(-150, 80, -120); scene.add(fill);
+  const group = new THREE.Group(); scene.add(group);
+  const ground = new THREE.Group(); scene.add(ground);
+  const cam = { th: 0.8, ph: 1.2, r: 260, target: new THREE.Vector3(0, 60, 0) };
+  let pickables = [], spinners = [];
+
+  function buildGround() {
+    ground.clear();
+    const mat = new THREE.Mesh(new THREE.PlaneGeometry(260, 260), new THREE.MeshBasicMaterial({ color: new THREE.Color(css('--mat')) }));
+    mat.rotation.x = -Math.PI / 2; mat.position.y = -0.2; ground.add(mat);
+    ground.add(new THREE.GridHelper(260, 26, new THREE.Color(css('--mat-line')), new THREE.Color(css('--mat-line'))));
+  }
+  function M(id, card, paint, extra) {
+    const m = new THREE.MeshStandardMaterial(Object.assign({ color: state.painted ? paint : card, roughness: state.painted ? 0.38 : 0.85, metalness: 0, side: THREE.DoubleSide }, extra || {}));
+    return m;
+  }
+  function add(geo, mat, id, setup) {
+    const mesh = new THREE.Mesh(geo, mat); mesh.userData.part = id;
+    if (setup) setup(mesh);
+    group.add(mesh); pickables.push(mesh); return mesh;
+  }
+  const shapeFrom = pts => { const s = new THREE.Shape(); pts.forEach((q, i) => i ? s.lineTo(q[0], q[1]) : s.moveTo(q[0], q[1])); return s; };
+  const loop = (f, n) => { const a = []; for (let i = 0; i < n; i++) a.push(f(i / n * Math.PI * 2)); return a; };
+  function checkerTex() {
+    const c = document.createElement('canvas'); c.width = 64; c.height = 32;
+    const g = c.getContext('2d');
+    for (let i = 0; i < 4; i++) for (let j = 0; j < 2; j++) { g.fillStyle = (i + j) % 2 ? '#111' : '#fafafa'; g.fillRect(i * 16, j * 16, 16, 16); }
+    const t = new THREE.CanvasTexture(c); t.wrapS = THREE.RepeatWrapping; t.magFilter = THREE.NearestFilter; return t;
+  }
+  function tube(points, r, color, id) {
+    const curve = new THREE.CatmullRomCurve3(points.map(q => new THREE.Vector3(q[0], q[1], q[2])), false, 'catmullrom', 0.1);
+    return add(new THREE.TubeGeometry(curve, points.length * 16, r, 8, false), new THREE.MeshStandardMaterial({ color, roughness: 0.6 }), id);
+  }
+
+  function buildModel() {
+    group.clear(); pickables = []; spinners = [];
+    const p = model.p, h = model.helpers, st = model.stats;
+    const dy = Math.round(p.height * 0.6), ledBack = {};
+    cam.target.set(-4, dy - 4, 0); cam.home = cam.target.clone();
+    const KR = 0xc49a6c, KR2 = 0xb08458, YEL = 0xf5c518, NAVY = 0x1b2a4a, BLK = 0x151515;
+    const P3 = (x, z, y) => [x, dy + z, y];
+
+    // deck
+    const deck = shapeFrom(loop(t => h.olPt(p, p.ol.top, t), 240));
+    deck.holes.push(shapeFrom(loop(s => [p.hx + p.holeD / 2 * Math.cos(s), p.holeW / 2 * Math.sin(s)], 96)));
+    add(new THREE.ExtrudeGeometry(deck, { depth: p.board, bevelEnabled: false, curveSegments: 1 }), M('A', KR, YEL), 'A', m => { m.rotation.x = -Math.PI / 2; m.position.y = dy - p.board; });
+    // rings
+    const ring = (o, w, id) => {
+      const s = shapeFrom(loop(t => { const q = h.se(t, o.a, o.b, Math.cos(t) >= 0 ? p.nF : p.nR); return [q[0] + o.cx, q[1]]; }, 200));
+      s.holes.push(shapeFrom(loop(t => { const q = h.se(t, o.a - w, o.b - w, Math.cos(t) >= 0 ? p.nF : p.nR); return [q[0] + o.cx, q[1]]; }, 200)));
+      add(new THREE.ExtrudeGeometry(s, { depth: p.board, bevelEnabled: false, curveSegments: 1 }), M(id, KR2, YEL), id, m => { m.rotation.x = -Math.PI / 2; m.position.y = dy + o.z; });
+    };
+    ring(p.ol.belt, 3, 'B1'); ring(p.ol.bot, 4, 'B2');
+    // walls
+    const strip = (which, t0, t1, sg, z0, z1, uv) => {
+      const pos = [], idx = [], uvs = [], n = 60;
+      for (let i = 0; i <= n; i++) {
+        const t = t0 + (t1 - t0) * i / n, A = h.wallPt(p, t, z0), B = h.wallPt(p, t, z1);
+        pos.push(A[0], dy + A[2], sg * A[1], B[0], dy + B[2], sg * B[1]);
+        uvs.push(i / n * (uv || 1), 1, i / n * (uv || 1), 0);
+      }
+      for (let i = 0; i < n; i++) { const k = 2 * i; idx.push(k, k + 1, k + 2, k + 2, k + 1, k + 3); }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+      g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); g.setIndex(idx); g.computeVertexNormals(); return g;
+    };
+    [1, -1].forEach(sg => {
+      add(strip('upper', 0, Math.PI / 2, sg, 0, -p.beltZ), M('C1', KR, YEL), 'C1');
+      add(strip('upper', Math.PI / 2, Math.PI, sg, 0, -p.beltZ), M('C2', 0xbe9265, YEL), 'C2');
+      add(strip('lower', 0, Math.PI / 2, sg, -p.beltZ, -p.H), M('C3', 0xba8d60, YEL), 'C3');
+      add(strip('lower', Math.PI / 2, Math.PI, sg, -p.beltZ, -p.H), M('C4', 0xb3875b, YEL), 'C4');
+    });
+    // a point on the wall and its outward normal, in scene coordinates
+    const wallFrame = (t, z, sg) => {
+      const e = 0.004, a = h.wallPt(p, t - e, z), b = h.wallPt(p, t + e, z), c = h.wallPt(p, t, z - 0.05), d = h.wallPt(p, t, z + 0.05), q = h.wallPt(p, t, z);
+      const tu = new THREE.Vector3(b[0] - a[0], 0, sg * (b[1] - a[1])), tv = new THREE.Vector3(d[0] - c[0], 0.1, sg * (d[1] - c[1]));
+      const n = new THREE.Vector3().crossVectors(tu, tv).normalize(), pos = new THREE.Vector3(q[0], dy + q[2], sg * q[1]);
+      if (n.x * q[0] + n.z * sg * q[1] * 1.4 < 0) n.negate();
+      return { pos, n };
+    };
+    const onWall = (mesh, t, z, sg, out) => { const f = wallFrame(t, z, sg); mesh.position.copy(f.pos).addScaledVector(f.n, out); mesh.lookAt(f.pos.clone().addScaledVector(f.n, 50)); };
+    const off = (g, d) => { const a = g.attributes.position; for (let i = 0; i < a.count; i++) { const x = a.getX(i), z = a.getZ(i), l = Math.hypot(x / 1.4, z) || 1; a.setXYZ(i, x + (x / 1.4) / l * d, a.getY(i), z + z / l * d); } g.computeVertexNormals(); return g; };
+    const patch = (t0, t1, zTop, zBot, sg) => {
+      const pos = [], idx = [], n = 40, m = 12;
+      for (let i = 0; i <= n; i++) {
+        const t = t0 + (t1 - t0) * i / n, zt = zTop(t);
+        for (let j = 0; j <= m; j++) { const q = h.wallPt(p, t, zt + (zBot - zt) * j / m); pos.push(q[0], dy + q[2], sg * q[1]); }
+      }
+      for (let i = 0; i < n; i++) for (let j = 0; j < m; j++) { const k = i * (m + 1) + j; idx.push(k, k + 1, k + m + 1, k + 1, k + m + 2, k + m + 1); }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals(); return g;
+    };
+    const lamp = { t: p.lampT, z: p.lampZ };
+    if (state.painted) {
+      const black = () => new THREE.MeshStandardMaterial({ color: BLK, roughness: 0.45, side: THREE.DoubleSide });
+      [1, -1].forEach(sg => {
+        // black nose panel; the yellow hood dips into it between the headlights
+        add(off(patch(0, 0.66, t => -1.3 - 4.8 * Math.exp(-Math.pow(t / 0.17, 2)), -p.H + 1.5, sg), 0.22), black(), 'paint');
+        // checker stripe like the blueprint: 2 rows of 2 cm squares, from the black nose to the black rear panel
+        const c0 = 0.68, c1 = Math.PI - 0.78, z0 = -p.beltZ - 0.4, z1 = -p.beltZ - 4.4;
+        let cl = 0; for (let i = 0; i < 60; i++) { const a = h.wallPt(p, c0 + (c1 - c0) * i / 60, -p.beltZ), b = h.wallPt(p, c0 + (c1 - c0) * (i + 1) / 60, -p.beltZ); cl += Math.hypot(a[0] - b[0], a[1] - b[1]); }
+        add(off(strip('', c0, c1, sg, z0, z1, Math.round(cl / 8)), 0.45), new THREE.MeshStandardMaterial({ map: checkerTex(), roughness: 0.5, side: THREE.DoubleSide }), 'paint');
+        // dark skid strip along the bottom edge
+        add(off(strip('', 0.62, Math.PI - 0.45, sg, -p.H + 1.4, -p.H + 0.15), 0.3), new THREE.MeshStandardMaterial({ color: 0x2b2f36, roughness: 0.6, side: THREE.DoubleSide }), 'paint');
+        // big "01" on the upper side wall, between the black nose and the strut (clear of the pod)
+        let lo = 0, hi = Math.PI; const nx = (h.wallPt(p, 0.66, -p.beltZ * 0.45)[0] + p.tubeFX + p.tubeD / 2) / 2;
+        for (let k = 0; k < 40; k++) { const mid = (lo + hi) / 2; if (h.wallPt(p, mid, -p.beltZ * 0.45)[0] > nx) lo = mid; else hi = mid; }
+        add(new THREE.PlaneGeometry(13, 4.9), new THREE.MeshBasicMaterial({ map: textTex('01'), transparent: true, side: THREE.DoubleSide }), 'paint', m => onWall(m, lo, -p.beltZ * 0.45, sg, 0.35));
+        // black rear panel between the tail lights
+        add(off(patch(Math.PI - 0.5, Math.PI, () => -p.beltZ - 2.2, -p.H + 1.5, sg), 0.22), black(), 'paint');
+      });
+      add(new THREE.PlaneGeometry(9, 4.5), new THREE.MeshBasicMaterial({ map: emblemTex(), transparent: true }), 'paint', m => onWall(m, 0.0005, -p.beltZ - 4.5, 1, 0.5));
+    }
+    [1, -1].forEach(sg => {
+      // egg-shaped headlight like the blueprint: glowing lens V in the window, trim U round it, hood R7 over the top
+      const N = 48, at = (t, z, out) => { const f = wallFrame(t, z, sg); return f.pos.clone().addScaledVector(f.n, out); };
+      const lensPts = h.lampTZ(p, 0, N), tO = h.lampTZ(p, 0.7, N), tI = h.lampTZ(p, -0.1, N), loc = h.lampLocal(p, 0.7, N);
+      const geo = (pts, idx) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pts.flatMap(v => [v.x, v.y, v.z]), 3)); g.setIndex(idx); g.computeVertexNormals(); return g; };
+      const fan = [at(p.lampT, p.lampZ, 0.32)].concat(lensPts.map(([t, z]) => at(t, z, 0.32))), fi = [];
+      for (let i = 0; i < N; i++) fi.push(0, 1 + i, 1 + (i + 1) % N);
+      const cf = wallFrame(p.lampT, p.lampZ, sg), inn = cf.n.clone().negate();
+      add(geo(fan, fi), new THREE.MeshStandardMaterial({ color: 0xf4f8ff, emissive: 0xbfe0ff, emissiveIntensity: 0.8, side: THREE.DoubleSide }), 'V', m => { m.userData.n = inn; });
+      const ring = tO.map(([t, z]) => at(t, z, 0.4)).concat(tI.map(([t, z]) => at(t, z, 0.4))), ri = [];
+      for (let i = 0; i < N; i++) { const j = (i + 1) % N; ri.push(i, j, N + i, j, N + j, N + i); }
+      add(geo(ring, ri), new THREE.MeshStandardMaterial({ color: 0x9aa5b4, metalness: 0.4, roughness: 0.3, side: THREE.DoubleSide }), 'U', m => { m.userData.n = cf.n; });
+      // hood: the top half of the trim, standing 2 cm out from the wall
+      let s0 = 0; while (!(loc[s0][1] > 0 && loc[(s0 + N - 1) % N][1] <= 0)) s0++;
+      const top = []; for (let k = 0; k < N && loc[(s0 + k) % N][1] > 0; k++) top.push(tO[(s0 + k) % N]);
+      const hv = [], hi = [];
+      top.forEach(([t, z]) => { const f = wallFrame(t, z, sg); hv.push(f.pos.clone().addScaledVector(f.n, 0.4), f.pos.clone().addScaledVector(f.n, 2.4)); });
+      for (let k = 0; k < top.length - 1; k++) { const a = 2 * k; hi.push(a, a + 1, a + 2, a + 2, a + 1, a + 3); }
+      add(geo(hv, hi), M('R7', 0xb08458, YEL), 'R7', m => { m.material.side = THREE.DoubleSide; m.userData.n = cf.n; });
+      // inside the body, behind the lens: light box side W, back X and the LED (hidden unless the walls fade or it is pulled apart)
+      const bx = h.lampTZ(p, 0.3, N), wv = [], wi = [], xv = [cf.pos.clone().addScaledVector(cf.n, -3.5)], xi = [];
+      bx.forEach(([t, z]) => { const f = wallFrame(t, z, sg); wv.push(f.pos.clone().addScaledVector(f.n, -0.45), f.pos.clone().addScaledVector(f.n, -3.45)); xv.push(f.pos.clone().addScaledVector(f.n, -3.5)); });
+      for (let i = 0; i < N; i++) { const a = 2 * i, b = 2 * ((i + 1) % N); wi.push(a, b, a + 1, b, b + 1, a + 1); xi.push(0, 1 + i, 1 + (i + 1) % N); }
+      add(geo(wv, wi), new THREE.MeshStandardMaterial({ color: 0xf3efe4, side: THREE.DoubleSide }), 'W', m => { m.userData.n = inn; });
+      add(geo(xv, xi), new THREE.MeshStandardMaterial({ color: 0xf3efe4, side: THREE.DoubleSide }), 'X', m => { m.userData.n = inn; });
+      add(new THREE.CylinderGeometry(0.5, 0.5, 1.2, 16), new THREE.MeshStandardMaterial({ color: 0xeaf4ff, emissive: 0xfff0c0, emissiveIntensity: 0.9 }), 'lamp', m => {
+        m.position.copy(cf.pos).addScaledVector(cf.n, -3.0); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), cf.n); m.userData.n = inn; });
+      ledBack[sg] = cf.pos.clone().addScaledVector(cf.n, -4.2);
+      // red tail lights at the rear corners, just under the stripe
+      add(new THREE.BoxGeometry(3, 5, 0.4), new THREE.MeshStandardMaterial({ color: 0xd3122a, emissive: 0x7a0010, emissiveIntensity: 0.5, roughness: 0.35 }), 'M',
+        m => onWall(m, Math.PI - 0.62, -p.beltZ - 4.6, sg, 0.5));
+    });
+    // beams
+    [[p.beamFX + p.board / 2, 'D1'], [p.backX - p.board / 2, 'D2']].forEach(([x, id]) => {
+      const yt = h.halfWidth(p, x, 0), yb = h.halfWidth(p, x, -p.beamD);
+      add(new THREE.ExtrudeGeometry(shapeFrom([[-yt, 0], [yt, 0], [yb, -p.beamD], [-yb, -p.beamD]]), { depth: p.board, bevelEnabled: false }), M(id, KR2, NAVY), id,
+        m => { m.rotation.y = Math.PI / 2; m.position.set(x - p.board / 2, dy - p.board, 0); });
+    });
+    // backrest
+    const hw = p.backW / 2, R = p.backR, bs = new THREE.Shape();
+    bs.moveTo(-hw, 0); bs.lineTo(hw, 0); bs.lineTo(hw, p.backH - R); bs.quadraticCurveTo(hw, p.backH, hw - R, p.backH);
+    bs.lineTo(-hw + R, p.backH); bs.quadraticCurveTo(-hw, p.backH, -hw, p.backH - R); bs.lineTo(-hw, 0);
+    // seat back: a hollow box with soft edges (two panels E + edge strip R8)
+    const bv = 0.6, hi = hw - bv, Ri = R - bv, Hb = p.backH - bv, bsIn = new THREE.Shape();
+    bsIn.moveTo(-hi, bv); bsIn.lineTo(hi, bv); bsIn.lineTo(hi, Hb - Ri); bsIn.quadraticCurveTo(hi, Hb, hi - Ri, Hb);
+    bsIn.lineTo(-hi + Ri, Hb); bsIn.quadraticCurveTo(-hi, Hb, -hi, Hb - Ri); bsIn.lineTo(-hi, bv);
+    add(new THREE.ExtrudeGeometry(bsIn, { depth: p.backT - 2 * bv, bevelEnabled: true, bevelThickness: bv, bevelSize: bv, bevelSegments: 4, curveSegments: 10 }), M('E', KR, YEL), 'E',
+      m => { m.rotation.y = Math.PI / 2; m.position.set(p.backX - p.backT + bv, dy, 0); });
+    if (state.painted) [p.backX + 0.05, p.backX - p.backT - 0.05].forEach(xf => {
+      // stitched inset panel, like the blueprint seat
+      const ins = 2.6, pts = [];
+      for (let i = 0; i <= 64; i++) { const u = i / 64 * Math.PI; pts.push(new THREE.Vector3(xf, dy + 2 + (p.backH - 2 - ins) * Math.sin(u) ** 0.35, (hw - ins) * Math.cos(u))); }
+      const ln = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineDashedMaterial({ color: 0x8a6a00, dashSize: 0.8, gapSize: 0.6 }));
+      ln.computeLineDistances(); group.add(ln);
+    });
+    // tail fin: each side is a fan of three triangles around A (see stencil K)
+    {
+      const F = h.finPts(p), V = (q, sg) => new THREE.Vector3(q[0], dy + q[2], sg * q[1]), v = [];
+      [1, -1].forEach(sg => { const A = V(F.A, sg); [['B', 'C'], ['C', 'D'], ['D', 'E']].forEach(([u, w]) => v.push(A.x, A.y, A.z, ...V(F[u], sg).toArray(), ...V(F[w], sg).toArray())); });
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); g.computeVertexNormals();
+      add(g, M('K', KR, YEL), 'K');
+      if (state.painted) [1, -1].forEach(sg => {
+        // leaf logo on each side, on the A-C-D facet
+        const A = V(F.A, sg), C = V(F.C, sg), D = V(F.D, sg), ctr = A.clone().multiplyScalar(0.3).add(C.clone().add(D).multiplyScalar(0.35));
+        const n = new THREE.Vector3().subVectors(C, A).cross(new THREE.Vector3().subVectors(D, A)).normalize();
+        if (n.z * sg < 0) n.negate();
+        add(new THREE.PlaneGeometry(6, 6), new THREE.MeshBasicMaterial({ map: leafTex(), transparent: true, side: THREE.DoubleSide }), 'paint',
+          m => { m.position.copy(ctr).addScaledVector(n, 0.15); m.lookAt(m.position.clone().add(n)); });
+      });
+    }
+    add(new THREE.BoxGeometry(p.taxiD, p.taxiH, p.taxiW), M('L', 0xe6e0d4, YEL), 'L', m => m.position.set(p.backX - p.backT / 2, dy + p.backH + p.taxiH / 2, 0));
+    if (state.painted) [1, -1].forEach(sd => add(new THREE.PlaneGeometry(p.taxiW - 1, p.taxiH - 1.6), new THREE.MeshBasicMaterial({ map: textTex('TAXI'), transparent: true }), 'paint',
+      m => { m.rotation.y = sd * Math.PI / 2; m.position.set(p.backX - p.backT / 2 + sd * (p.taxiD / 2 + 0.05), dy + p.backH + p.taxiH / 2, 0); }));
+    // dome, dashboard
+    // curved windshield (stencil S) with taped top edge
+    {
+      const n = 48, pos = [], idx = [], topLine = [];
+      for (let i = 0; i <= n; i++) {
+        const f = -1 + 2 * i / n, Tq = h.shieldPt(p, f, true), Bq = h.shieldPt(p, f, false);
+        pos.push(Tq[0], dy + Tq[2], Tq[1], Bq[0], dy + Bq[2], Bq[1]); topLine.push([Tq[0], Tq[2], Tq[1]]);
+      }
+      for (let i = 0; i < n; i++) { const k = 2 * i; idx.push(k, k + 1, k + 2, k + 2, k + 1, k + 3); }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+      add(g, new THREE.MeshStandardMaterial({ color: 0xbfe3ff, transparent: true, opacity: 0.32, roughness: 0.05, metalness: 0.1, side: THREE.DoubleSide, depthWrite: false }), 'S');
+      tube(topLine.map(q => P3(q[0], q[1], q[2])), 0.3, 0x151515, 'S');
+    }
+    add(new THREE.BoxGeometry(0.5, 6, 14), M('G', KR, BLK), 'G', m => { m.position.set(p.beamFX + 2.2, dy + 2.8, 0); m.rotation.z = 0.42; });
+    // two braces H under the back of the leaning dashboard
+    [1, -1].forEach(sg => add(new THREE.ExtrudeGeometry(shapeFrom([[p.beamFX + 3.2, 0], [p.beamFX + 0.8, 0], [p.beamFX + 0.8, 5.2]]), { depth: p.board, bevelEnabled: false }), M('H', KR2, NAVY), 'H',
+      m => m.position.set(0, dy, sg * 5 - p.board / 2)));
+    // strut, pods, rotors
+    add(new THREE.CylinderGeometry(p.tubeD / 2, p.tubeD / 2, 2 * p.rotorY, 28), M('R1', 0xa77a4c, NAVY), 'R1', m => { m.rotation.x = Math.PI / 2; m.position.set(p.tubeFX, dy + p.strutZ, 0); });
+    const Rr = p.rotorD / 2, rr = Rr - p.ringW, top = p.podTop;
+    [1, -1].forEach(sg => {
+      const z = sg * p.rotorY;
+      // pod tube with its top cut on a slant (template P), so the rotor head sits flat on it
+      const pg = new THREE.CylinderGeometry(p.tubeD / 2, p.tubeD / 2, p.podLen, 32, 1), pa = pg.attributes.position;
+      for (let i = 0; i < pa.count; i++) if (pa.getY(i) > 0) pa.setY(i, pa.getY(i) - pa.getX(i) * Math.tan(p.tiltR));
+      pg.computeVertexNormals();
+      add(pg, M('R2', 0xa77a4c, NAVY), 'R2', m => m.position.set(p.tubeFX, dy + p.podBot + p.podLen / 2, z));
+      // collar Y: a card band round the slanted top of the tube, its tabs folded out flat under disc Q
+      const yg = new THREE.CylinderGeometry(p.tubeD / 2 + 0.08, p.tubeD / 2 + 0.08, 2.5, 32, 1, true), ya = yg.attributes.position;
+      for (let i = 0; i < ya.count; i++) ya.setY(i, ya.getY(i) - ya.getX(i) * Math.tan(p.tiltR));
+      yg.computeVertexNormals();
+      add(yg, M('Y', 0xd9c7a3, YEL), 'Y', m => { m.material.side = THREE.DoubleSide; m.position.set(p.tubeFX, dy + top - 1.25, z); });
+      add(new THREE.CylinderGeometry(p.tubeD / 2 + 0.15, p.tubeD / 2 + 0.15, 0.4, 24), M('N', KR2, NAVY), 'N', m => m.position.set(p.tubeFX, dy + p.podBot - 0.2, z));
+      const head = new THREE.Group(); head.position.set(p.tubeFX, dy + top, z); head.rotation.z = -p.tiltR; group.add(head);
+      const hd = m => head.add(m);
+      // rotor: base disc Q on the pod top, rim R3 round its edge, lip ring I on the rim, clear cover on top
+      hd(add(new THREE.CylinderGeometry(Rr, Rr, p.board, 48), M('Q', KR2, NAVY), 'Q', m => { m.position.y = p.board / 2; }));
+      hd(add(new THREE.CylinderGeometry(Rr, Rr, p.rimH, 48, 1, true), M('R3', KR2, YEL), 'R3', m => { m.position.y = p.board + p.rimH / 2; }));
+      hd(add(new THREE.RingGeometry(rr, Rr, 48), M('I', KR, YEL), 'I', m => { m.rotation.x = -Math.PI / 2; m.position.y = p.board + p.rimH; }));
+      hd(add(new THREE.CircleGeometry(Rr, 48), new THREE.MeshStandardMaterial({ color: 0xdff2ff, transparent: true, opacity: 0.22, roughness: 0.05, side: THREE.DoubleSide, depthWrite: false }), 'I',
+        m => { m.rotation.x = -Math.PI / 2; m.position.y = p.board + p.rimH + 0.05; }));
+      hd(add(new THREE.RingGeometry(p.tubeD / 2, p.tubeD / 2 + 1, 32), M('Y', 0xd9c7a3, YEL), 'Y', m => { m.material.side = THREE.DoubleSide; m.rotation.x = -Math.PI / 2; m.scale.x = 1 / Math.cos(p.tiltR); m.position.y = -0.03; }));
+      // motor collar R9: card wrapped round the motor, glued under base disc Q
+      hd(add(new THREE.CylinderGeometry(1.15, 1.15, 2.5, 20), M('R9', 0xd9c7a3, NAVY), 'R9', m => { m.position.y = -1.25; }));
+      const rot = new THREE.Group(); rot.position.y = p.board + 1.2; head.add(rot); spinners.push({ g: rot, dir: sg });
+      const hub = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 1.2, 20), M('hub', 0x3b82c4, YEL)); rot.add(hub); hub.userData.part = 'hub'; pickables.push(hub);
+      for (let k = 0; k < 4; k++) {
+        const b = new THREE.Mesh(new THREE.BoxGeometry(rr - 2.3, 0.12, 2.6), M('J', 0x2a2a2a, BLK));
+        b.position.set(Math.cos(k * Math.PI / 2) * (rr - 2.3) / 2 + Math.cos(k * Math.PI / 2) * 1.4, 0, -Math.sin(k * Math.PI / 2) * ((rr - 2.3) / 2 + 1.4));
+        b.rotation.y = k * Math.PI / 2; b.rotation.x = 0.3; b.userData.part = 'J'; rot.add(b); pickables.push(b);
+      }
+      // motor inside the pod (seen when the pod is highlighted or in cardboard view)
+      hd(add(new THREE.CylinderGeometry(1, 1, 2.6, 16), new THREE.MeshStandardMaterial({ color: 0xb8bec6, metalness: 0.6, roughness: 0.3 }), 'motor', m => { m.position.y = -1.35; }));
+    });
+    // battery box under the deck behind her (master switch), take-off button on the right-hand deck rim
+    add(new THREE.BoxGeometry(6, 1.8, 3.4), new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.6 }), 'battery', m => m.position.set(p.batX, dy - p.board - 0.9, 0));
+    const [btx, bty] = h.buttonAt(p);
+    add(new THREE.CylinderGeometry(2.2, 2.2, 0.3, 28), new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.5 }), 'button', m => m.position.set(btx, dy + 0.15, bty));
+    add(new THREE.CylinderGeometry(0.9, 0.9, 1.2, 24), new THREE.MeshStandardMaterial({ color: 0xe0242e, roughness: 0.35 }), 'button', m => m.position.set(btx, dy + 0.8, bty));
+    if (state.wire) {
+      const yw = h.halfWidth(p, p.tubeFX, -1) - 3, yd = h.halfWidth(p, p.backX, 0) * 0.6;
+      const route = [[p.batX + 3, -1.6, -1], [p.backX - 0.2, -1.4, -yd], [p.hx - p.holeD / 2, -1.2, -(h.halfWidth(p, p.hx - p.holeD / 2, -1) - 2.5)], [btx - 2, -1.2, bty], [btx, -0.3, bty], [btx + 2, -1.2, bty],
+        [p.beamFX - 1, -1.2, -yw], [p.tubeFX, p.strutZ, -yw], [p.tubeFX, p.strutZ, 0]];
+      tube(route.map(q => P3(q[0], q[1], q[2])), 0.35, 0xd0342c, 'wire');
+      [1, -1].forEach(sg => tube([[p.tubeFX, p.strutZ, 0], [p.tubeFX, p.strutZ, sg * (p.rotorY - 0.6)], [p.tubeFX, top - 2, sg * (p.rotorY - 0.6)]].map(q => P3(q[0], q[1], q[2])), 0.35, 0xd0342c, 'wire'));
+      // headlight wire: alongside the motor wire, on past the strut to the nose, one branch per headlight
+      const lf = h.wallPt(p, p.lampT, p.lampZ), xn = p.tubeFX + 3, yn = h.halfWidth(p, xn, -1.6) - 2.5;
+      tube([[p.batX + 3, -1.9, -1.4], [p.backX - 0.2, -1.8, -yd - 0.5], [p.hx - p.holeD / 2, -1.6, -(h.halfWidth(p, p.hx - p.holeD / 2, -1.6) - 3)], [p.beamFX - 1, -1.6, -yw - 0.5], [xn, -1.6, -yn], [lf[0] - 4, -2.5, 0]].map(q => P3(q[0], q[1], q[2])), 0.3, 0xf2c200, 'wire');
+      [1, -1].forEach(sg => tube([P3(lf[0] - 4, -2.5, 0), P3(lf[0] - 5, lf[2] + 0.5, sg * (lf[1] - 5)), [ledBack[sg].x, ledBack[sg].y, ledBack[sg].z]], 0.3, 0xf2c200, 'wire'));
+    }
+    // child and straps
+    const sh = p.height * 0.81 - dy, neck = p.height * 0.84 - dy;
+    if (state.kid) {
+      const ghost = new THREE.MeshStandardMaterial({ color: 0x9fb4d8, transparent: true, opacity: 0.33, roughness: 0.9, depthWrite: false });
+      const fig = (geo, setup) => { const m = new THREE.Mesh(geo, ghost); setup(m); group.add(m); };
+      const hipZ = p.hipW / 2 - 4.2;
+      [1, -1].forEach(sg => fig(new THREE.CylinderGeometry(4.4, 3.4, dy - 2, 16), m => m.position.set(p.hx, (dy - 2) / 2, sg * hipZ)));
+      fig(new THREE.CylinderGeometry(1, 1, sh + 6, 24), m => { m.scale.set(p.hipD / 2 - 0.3, 1, p.hipW / 2 - 0.3); m.position.set(p.hx, dy - 6 + (sh + 6) / 2, 0); });
+      fig(new THREE.SphereGeometry(p.height * 0.09, 24, 16), m => m.position.set(p.hx + 1, p.height - p.height * 0.09, 0));
+      [1, -1].forEach(sg => {
+        const arm = new THREE.CatmullRomCurve3([[p.hx - 1, dy + sh - 2, sg * (p.hipW / 2 + 1.5)], [p.hx + 1, dy + sh * 0.45, sg * (p.hipW / 2 + 3)], [p.hx + 9, dy + 4, sg * (p.hipW / 2 + 2.5)], [p.hx + 13, dy + 1.5, sg * (p.hipW / 2 + 1)]].map(q => new THREE.Vector3(q[0], q[1], q[2])));
+        group.add(new THREE.Mesh(new THREE.TubeGeometry(arm, 24, 2.1, 10, false), ghost));
+      });
+    }
+    if (state.strap) {
+      const [sx, sy] = model.stats.strapFront, by = model.stats.strapBackY, bz = p.backH - 3.5, rb = p.backX + 0.3;
+      [1, -1].forEach(sg => tube([[sx, 0.3, sg * sy], [p.hx + p.hipD / 2 + 1, sh * 0.6, sg * (sy - 1)], [p.hx + 2, sh + 2.2, sg * 8], [p.hx - p.hipD / 2 - 1.5, sh, sg * 4], [rb, bz, -sg * by]].map(q => P3(q[0], q[1], q[2])), 0.55, 0x1b2a4a, 'R6'));
+    }
+    // balance point
+    add(new THREE.SphereGeometry(1.1, 16, 12), new THREE.MeshBasicMaterial({ color: 0xff2d55 }), 'cg', m => m.position.set(st.cgX, dy + 0.9, 0));
+    prepApart();
+    highlight();
+  }
+  // pull apart: the body splits into layers (seat and sign up top, deck lifted, walls in the middle, lower walls and rings below),
+  // the rotors rise off their pods, and the headlight layers slide in and out along the wall. Paint, wires and straps hide meanwhile.
+  const LIFT = { A: 14, D1: 14, D2: 14, battery: 14, button: 14, cg: 14, G: 20, H: 20, S: 24, E: 22, R8: 22, K: 26, L: 34,
+    R1: 6, R2: 6, N: 6, B1: -5, C3: -10, C4: -10, M: -10, B2: -18 };
+  const OUTWARD = { V: 3, W: 6, X: 10, lamp: 10, U: 3, R7: 3 };
+  function partOf(o) { if (o.userData.part) return o.userData.part; let id = null; o.traverse(c => { if (!id && c.userData.part) id = c.userData.part; }); return id; }
+  function prepApart() {
+    group.children.forEach(o => {
+      const id = partOf(o), off = new THREE.Vector3();
+      if (o.isGroup && ['Q', 'R3', 'I', 'J', 'R9'].includes(id)) off.y = 18;
+      else if (id in OUTWARD && o.userData.n) off.copy(o.userData.n).multiplyScalar(OUTWARD[id]);
+      else if (id in LIFT) off.y = LIFT[id];
+      o.userData.home = o.position.clone(); o.userData.off = off; o.userData.hideApart = !id || id === 'paint' || id === 'wire' || id === 'R6';
+      if (!id) o.userData.hideApart = false;
+    });
+    applyApart();
+  }
+  function applyApart() {
+    group.children.forEach(o => {
+      if (!o.userData.home) return;
+      o.position.copy(o.userData.home).addScaledVector(o.userData.off, state.ex);
+      if (o.userData.hideApart) o.visible = state.ex < 0.05;
+    });
+    draw();
+  }
+  function animApart() {
+    const goal = state.apart ? 1 : 0, d = goal - state.ex;
+    if (Math.abs(d) < 0.003) { state.ex = goal; applyApart(); return; }
+    state.ex += d * 0.14; applyApart(); requestAnimationFrame(animApart);
+  }
+  function leafTex() {
+    const c = document.createElement('canvas'); c.width = c.height = 128;
+    const g = c.getContext('2d'); g.fillStyle = '#151515'; g.translate(64, 64); g.rotate(-0.6);
+    g.beginPath(); g.moveTo(0, -50); g.bezierCurveTo(34, -30, 30, 26, 0, 46); g.bezierCurveTo(-30, 26, -34, -30, 0, -50); g.fill();
+    g.strokeStyle = '#f5c518'; g.lineWidth = 4; g.beginPath(); g.moveTo(0, -40); g.lineTo(0, 56); g.stroke();
+    return new THREE.CanvasTexture(c);
+  }
+  function emblemTex() {
+    const c = document.createElement('canvas'); c.width = 256; c.height = 128;
+    const g = c.getContext('2d'); g.fillStyle = '#f5c518'; g.strokeStyle = '#f5c518'; g.lineWidth = 9; g.lineCap = 'round';
+    [[-1, 0], [1, 0]].forEach(([s]) => [0, 1, 2].forEach(k => { g.beginPath(); g.moveTo(128 + s * 40, 50 + k * 16); g.lineTo(128 + s * (118 - k * 20), 50 + k * 16); g.stroke(); }));
+    g.beginPath(); g.arc(128, 64, 38, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#151515'; g.beginPath(); g.arc(128, 64, 28, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#f5c518'; g.beginPath(); g.arc(128, 64, 20, 0, Math.PI * 2); g.fill();
+    return new THREE.CanvasTexture(c);
+  }
+  function textTex(s) {
+    const c = document.createElement('canvas'); c.width = 256; c.height = 96;
+    const g = c.getContext('2d'); g.fillStyle = '#111'; g.font = '900 78px Impact, Arial Black, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(s, 128, 52);
+    return new THREE.CanvasTexture(c);
+  }
+  const SEL = new THREE.Color(0xff5a1f);
+  // guides and hidden strips have no shape of their own on the model: light up the part they belong to
+  const USES = {
+    O: [['R1'], 'Paper guide for both ends of the strut tube R1, which is lit up.'],
+    P: [['R2'], 'Paper guide for both pod tubes R2, which are lit up.'],
+    Y: [['Y', 'R2', 'Q'], 'Wraps the top of each pod tube R2; its tabs glue under base disc Q. Both are lit up.'],
+    R8: [['E'], 'Hidden between the two seat panels; the seat E is lit up.'],
+    R5: [['C1', 'C2', 'C3', 'C4'], 'Glued inside the wall seams; the walls are lit up.']
+  };
+  const lit = (id, sel) => !!sel && (id === sel || (USES[sel] ? USES[sel][0].includes(id) : false));
+  function highlight() {
+    const sel = state.sel;
+    group.traverse(o => {
+      if (!o.isMesh) return;
+      const mt = o.material, u = mt.userData, id = o.userData.part;
+      if (u.op == null) { u.op = mt.opacity; u.tr = mt.transparent; u.dw = mt.depthWrite; u.col = mt.color ? mt.color.clone() : null; }
+      const on = lit(id, sel), ghost = !!sel && !on;
+      if (mt.color && u.col && !mt.map) mt.color.copy(on ? SEL : u.col);
+      if (mt.emissive) { if (u.em == null) { u.em = mt.emissive.getHex(); u.emi = mt.emissiveIntensity; } mt.emissive.setHex(on ? 0xff3d00 : u.em); mt.emissiveIntensity = on ? 0.55 : u.emi; }
+      mt.transparent = ghost || u.tr; mt.opacity = ghost ? Math.min(u.op, 0.1) : (on ? Math.max(u.op, 0.85) : u.op); mt.depthWrite = ghost ? false : u.dw;
+      mt.needsUpdate = true;
+    });
+    showInfo();
+    draw();
+  }
+  const EXTRA = {
+    hub: ['Blade hub', 'A bottle cap pressed onto the motor shaft.'],
+    motor: ['Hobby motor', 'Inside the top of each pod: wrapped in collar R9 and pushed into the socket under base disc Q, shaft up through Q.'],
+    battery: ['Battery box', '2 × AA with its own switch, under the deck behind her. That switch is your master switch.'],
+    button: ['TAKE-OFF button', '16 mm latching push button on the right-hand deck rim. The pilot presses it on the ramp.'],
+    lamp: ['Headlight', 'Egg-shaped window in wall C1 with a white lens V behind it and a small white card light box (W + X) behind that, a 10 mm white LED in its back. Lights up with the master switch.'],
+    wire: ['Wiring', 'Red: battery, through D2, under the right deck edge to the button, then through the strut tube to the motors. Yellow: battery straight to the two headlights.'],
+    cg: ['Balance point', 'Where the weight sits. Keep it near her hips.']
+  };
+  function infoFor(id) {
+    const pt = model.parts.find(q => q.id === id);
+    if (pt) return { tag: id, name: pt.name, ds: `Stencil ${id} · cut ${pt.cut} · A4 page ${pagesFor(id)}`, go: 'Show stencil' };
+    const r = model.ruler.find(q => q.id === id);
+    if (r) return { tag: id, name: r.name, ds: `Ruler cut, no stencil · ${r.size}`, go: 'Show in ruler cuts' };
+    const x = EXTRA[id];
+    return x ? { tag: '·', name: x[0], ds: x[1] } : null;
+  }
+  function showInfo() {
+    const el = $('pickinfo'), inf = state.sel && infoFor(state.sel);
+    if (!inf) { el.hidden = true; return; }
+    const seen = pickables.some(m => lit(m.userData.part, state.sel)), use = USES[state.sel];
+    el.innerHTML = `<span class="tg">${inf.tag}</span><b>${inf.name}</b><span class="acts">${inf.go ? `<button class="go" data-go="1">${inf.go}</button>` : ''}${LV.has(state.sel) ? '<button data-lamp="1">Headlight 3D</button>' : ''}${RV.has(state.sel) ? '<button data-rotor="1">Rotor 3D</button>' : ''}${SV.has(state.sel) ? '<button data-seat="1">Seat 3D</button>' : ''}<button data-clear="1" aria-label="Clear selection">✕</button></span>
+      <span class="ds">${inf.ds}${use ? ' · ' + use[1] : seen ? '' : ' · hidden inside, not drawn on the model'}</span>`;
+    el.hidden = false;
+  }
+  $('pickinfo').addEventListener('click', e => {
+    if (e.target.closest('[data-clear]')) { select(null); return; }
+    if (e.target.closest('[data-lamp]')) { LV.show(state.sel); return; }
+    if (e.target.closest('[data-rotor]')) { RV.show(state.sel); return; }
+    if (e.target.closest('[data-seat]')) { SV.show(state.sel); return; }
+    if (!e.target.closest('[data-go]')) return;
+    if (model.parts.some(q => q.id === state.sel)) { openBig(state.sel); return; }
+    const c = document.querySelector(`.card[data-part="${state.sel}"], tr[data-part="${state.sel}"]`);
+    if (c) { c.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' }); c.classList.remove('flash'); void c.offsetWidth; c.classList.add('flash'); }
+  });
+
+  function placeCam() {
+    const { th, ph, r, target } = cam;
+    camera.position.set(target.x + r * Math.sin(ph) * Math.cos(th), target.y + r * Math.cos(ph), target.z + r * Math.sin(ph) * Math.sin(th));
+    camera.lookAt(target);
+  }
+  function resize() {
+    const w = cv.clientWidth, h = cv.clientHeight;
+    if (!w || !h) return;
+    renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); draw();
+  }
+  let pending = false;
+  function draw() { if (pending) return; pending = true; requestAnimationFrame(() => { pending = false; placeCam(); renderer.render(scene, camera); }); }
+
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let spinning = !reduce;
+  function tick() {
+    if (!spinning && !state.spin) return;
+    if (spinning) cam.th += 0.004;
+    if (state.spin) spinners.forEach(s => { s.g.rotation.y += 0.35 * s.dir; });
+    draw(); requestAnimationFrame(tick);
+  }
+  const stopSpin = () => { spinning = false; };
+
+  const ptrs = new Map(); let pinch0 = 0, r0 = 0, moved = 0, pan = false;
+  const mid = () => { const v = [...ptrs.values()]; return { x: (v[0].x + v[1].x) / 2, y: (v[0].y + v[1].y) / 2 }; };
+  cv.addEventListener('contextmenu', e => e.preventDefault());
+  cv.addEventListener('pointerdown', e => { stopSpin(); if (e.button === 1) e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch (err) {} ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); moved = 0;
+    pan = e.button === 1 || e.button === 2 || e.shiftKey;
+    if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch0 = Math.hypot(a.x - b.x, a.y - b.y); r0 = cam.r; } });
+  cv.addEventListener('pointermove', e => {
+    if (!ptrs.has(e.pointerId)) return;
+    const m0 = ptrs.size === 2 ? mid() : null, prev = ptrs.get(e.pointerId), cur = { x: e.clientX, y: e.clientY }; ptrs.set(e.pointerId, cur);
+    if (ptrs.size === 1) {
+      if (pan) panBy(camera, cam.target, cur.x - prev.x, cur.y - prev.y, cam.r, cv.clientHeight);
+      else { cam.th += (cur.x - prev.x) * 0.008; cam.ph = Math.min(Math.PI - 0.05, Math.max(0.05, cam.ph - (cur.y - prev.y) * 0.008)); }
+      moved += Math.abs(cur.x - prev.x) + Math.abs(cur.y - prev.y);
+    } else if (ptrs.size === 2) {
+      const [a, b] = [...ptrs.values()], d = Math.hypot(a.x - b.x, a.y - b.y), m1 = mid(); cam.r = Math.min(600, Math.max(70, r0 * pinch0 / d)); moved = 99;
+      panBy(camera, cam.target, m1.x - m0.x, m1.y - m0.y, cam.r, cv.clientHeight);
+    }
+    draw();
+  });
+  cv.addEventListener('pointerup', e => { if (ptrs.size === 1 && moved < 5 && !pan) pick(e); ptrs.delete(e.pointerId); });
+  cv.addEventListener('pointercancel', e => ptrs.delete(e.pointerId));
+  cv.addEventListener('wheel', e => { stopSpin(); wheelNav(e, cam, camera, cv.clientHeight, 70, 600); draw(); }, { passive: false });
+  const ray = new THREE.Raycaster();
+  function pick(e) {
+    const rc = cv.getBoundingClientRect();
+    ray.setFromCamera(new THREE.Vector2((e.clientX - rc.left) / rc.width * 2 - 1, -(e.clientY - rc.top) / rc.height * 2 + 1), camera);
+    const ok = id => !!infoFor(id);
+    const hit = ray.intersectObjects(pickables.filter(m => ok(m.userData.part)))[0];
+    select(hit ? hit.object.userData.part : null);
+  }
+  function select(id) {
+    state.sel = id && state.sel !== id ? id : null;
+    document.querySelectorAll('.card, .cardsel, .fchip, .lp').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.part === state.sel)));
+    document.querySelectorAll('tr[data-part]').forEach(c => c.setAttribute('aria-selected', String(c.dataset.part === state.sel)));
+    highlight();
+  }
+  const fromList = e => {
+    if (e.target.closest('[data-expand]')) return;
+    const c = e.target.closest('[data-part]'); if (!c) return;
+    stopSpin(); select(c.dataset.part);
+    if (state.sel && !c.classList.contains('fchip')) $('viewer').scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
+  };
+  ['parts', 'ruler', 'finder', 'sheets', 'glue'].forEach(id => $(id).addEventListener('click', fromList));
+  $('glue').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fromList(e); } });
+  $('parts').addEventListener('click', e => { const b = e.target.closest('[data-expand]'); if (b) openBig(b.dataset.expand); });
+  $('bigClose').addEventListener('click', () => $('big').close());
+  $('big').addEventListener('click', e => { if (e.target === $('big')) $('big').close(); });
+  $('bigFind').addEventListener('click', () => { const id = $('big').dataset.part; $('big').close(); stopSpin(); if (state.sel !== id) select(id); $('viewer').scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' }); });
+  $('ruler').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fromList(e); } });
+
+  const VIEWS = { front: [0, 1.45], side: [-Math.PI / 2, 1.5], back: [Math.PI, 1.35], top: [-Math.PI / 2, 0.05] };
+  document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => { stopSpin(); [cam.th, cam.ph] = VIEWS[b.dataset.view]; cam.r = 240; if (cam.home) cam.target.copy(cam.home); draw(); }));
+  const toggle = (id, key, rebuildModel) => $(id).addEventListener('click', () => {
+    state[key] = !state[key]; $(id).setAttribute('aria-pressed', String(state[key]));
+    if (rebuildModel) buildModel();
+    if (key === 'spin' && state.spin) tick();
+  });
+  $('tApart').addEventListener('click', () => { state.apart = !state.apart; $('tApart').setAttribute('aria-pressed', String(state.apart)); stopSpin(); animApart(); });
+  toggle('tPaint', 'painted', true); toggle('tKid', 'kid', true); toggle('tStrap', 'strap', true); toggle('tWire', 'wire', true); toggle('tSpin', 'spin', false);
+
+  function rebuild() { model = S.build(state.over); layout = S.layoutA4(model.parts); renderLists(); renderSheets(); renderTubes(); renderLamps(); RV.build(model.p); SV.build(model); renderStats(); buildModel(); }
+  document.querySelectorAll('[data-flute]').forEach(b => b.addEventListener('click', () => {
+    state.flute = b.dataset.flute;
+    document.querySelectorAll('[data-flute]').forEach(c => c.setAttribute('aria-pressed', String(c === b)));
+    try { localStorage.setItem('skycab-flute', state.flute); } catch (e) {}
+    renderSheets();
+  }));
+  document.querySelectorAll('[data-board]').forEach(b => b.addEventListener('click', () => {
+    state.only3 = b.dataset.board === 'only3';
+    document.querySelectorAll('[data-board]').forEach(c => c.setAttribute('aria-pressed', String(c === b)));
+    try { localStorage.setItem('skycab-board', b.dataset.board); } catch (e) {}
+    renderSheets();
+  }));
+  const readSheet = () => {
+    const a = parseFloat($('shA').value), b = parseFloat($('shB').value);
+    if (!(a >= 18 && b >= 18)) return;
+    state.sheetIn = [Math.min(a, b), Math.max(a, b)];
+    try { localStorage.setItem('skycab-sheet', JSON.stringify(state.sheetIn)); } catch (e) {}
+    renderSheets();
+  };
+  const isRoll = () => state.paper === 'roll';
+  const paperLabels = () => {
+    $('dlSheets').textContent = `Download the print file (${isRoll() ? '36-inch roll' : 'A0 + A2'})`;
+    document.querySelectorAll('[data-paper]').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.paper === state.paper)));
+  };
+  state.paper = 'roll';
+  try { const pv = localStorage.getItem('skycab-paper'); if (pv === 'a0' || pv === 'roll') state.paper = pv; } catch (e) {}
+  paperLabels();
+  document.querySelectorAll('[data-paper]').forEach(b => b.addEventListener('click', () => { state.paper = b.dataset.paper; try { localStorage.setItem('skycab-paper', state.paper); } catch (e) {} paperLabels(); }));
+  $('dlSheets').addEventListener('click', () => {
+    const r = SkyCabPDF.makeShopPrints(model, { flute: state.flute, only3: state.only3, sheetW: state.sheetIn[1] * IN, sheetH: state.sheetIn[0] * IN, roll: isRoll() });
+    download(`SkyCab-PRINT-THIS-${isRoll() ? '36in-roll' : 'A0-A2'}-waves-${state.flute}-side-${state.sheetIn[0]}x${state.sheetIn[1]}in.pdf`, r);
+    $('dlnote').textContent = `Downloaded one file: ${r.sheets} cardboard-sheet pages, then ${r.n - r.sheets} page${r.n - r.sheets > 1 ? 's' : ''} of other parts${isRoll() ? ', all 860 mm wide for the 36-inch roll' : ''}.`;
+  });
+  $('dlA4').addEventListener('click', () => { const n = download('SkyCab-stencils-A4.pdf', SkyCabPDF.makeA4(model)); $('dlnote').textContent = `Downloaded ${n} A4 pages.`; });
+  let shT; ['shA', 'shB'].forEach(id => $(id).addEventListener('input', () => { clearTimeout(shT); shT = setTimeout(readSheet, 400); }));
+  try { const sv = JSON.parse(localStorage.getItem('skycab-sheet') || 'null'); if (sv && sv.length === 2) { state.sheetIn = sv; $('shA').value = sv[0]; $('shB').value = sv[1]; } } catch (e) {}
+  try { const bv = localStorage.getItem('skycab-board'); if (bv === 'mixed') { state.only3 = false; document.querySelectorAll('[data-board]').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.board === bv))); } } catch (e) {}
+  try { const fv = localStorage.getItem('skycab-flute'); if (fv === 'long' || fv === 'short') { state.flute = fv; document.querySelectorAll('[data-flute]').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.flute === fv))); } } catch (e) {}
+  let t;
+  KID.concat(DES).forEach(k => $(k).addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => { readInputs(); rebuild(); }, 300); }));
+  $('reset').addEventListener('click', () => { state.over = {}; fillInputs(); readInputs(); rebuild(); });
+  $('copy').addEventListener('click', () => {
+    const inch = Object.fromEntries(KID.map(k => [k + '_in', +(val(k) / IN).toFixed(2)]));
+    const des = Object.fromEntries(DES.map(k => [k + '_cm', val(k)]));
+    const msg = `Please regenerate the SkyCab stencils with these sizes: ${JSON.stringify(Object.assign(inch, des))}`;
+    const done = () => { $('copy').textContent = 'Copied'; setTimeout(() => { $('copy').textContent = 'Copy sizes for Claude'; }, 1800); };
+    const fallback = () => { const ta = $('copyfall'); ta.hidden = false; ta.value = msg; ta.focus(); ta.select(); };
+    try { navigator.clipboard.writeText(msg).then(done, fallback); } catch (e) { fallback(); }
+  });
+  const mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', () => { buildGround(); draw(); });
+
+  fillInputs(); buildGround(); rebuild();
+  new ResizeObserver(resize).observe(cv); resize();
+  tick();
+})();
+</script>
+</body>
+</html>
